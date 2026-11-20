@@ -611,7 +611,12 @@
               <h1 id="wallets-title" class="font-extrabold text-2xl sm:text-3xl"></h1>
               <p id="wallets-subtitle" class="muted font-bold text-sm mt-1"></p>
             </div>
-            <button id="btn-add-wallet" class="app-button" type="button" data-action="wallet" style="background:#d9c6f5;color:#48342f;"></button>
+            <div class="flex items-center gap-3">
+            <button id="wallets-privacy-btn" type="button" class="clay-disk hover:scale-105" aria-label="Toggle balance visibility">
+              <i data-lucide="eye"></i>
+            </button>
+          <button id="btn-add-wallet" class="app-button" type="button" data-action="wallet" style="background:#d9c6f5;color:#48342f;"></button>
+          </div>
           </div>
           <div id="wallet-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
@@ -886,7 +891,7 @@
         btnIncome: "＋ Pemasukan",
         btnExpense: "＋ Pengeluaran",
         btnTransfer: "⇄ Transfer",
-        cashflow: "Arus Kas Bulan Ini ✦",
+        cashflow: "Arus Kas 3 Bulan Terakhir ✦",
         recentTx: "Transaksi Terbaru",
         seeAll: "Lihat semua →",
         walletsTitle: "Dompet Saya",
@@ -1077,7 +1082,7 @@
         btnIncome: "＋ Income",
         btnExpense: "＋ Expense",
         btnTransfer: "⇄ Transfer",
-        cashflow: "Monthly Cashflow ✦",
+        cashflow: "Cashflow, Last 3 Months ✦",
         recentTx: "Recent Transactions",
         seeAll: "See all →",
         walletsTitle: "My Wallets",
@@ -1268,7 +1273,7 @@
         btnIncome: "＋ Einnahme",
         btnExpense: "＋ Ausgabe",
         btnTransfer: "⇄ Überweisung",
-        cashflow: "Monatlicher Cashflow ✦",
+        cashflow: "Cashflow der letzten 3 Monate ✦",
         recentTx: "Letzte Transaktionen",
         seeAll: "Alle ansehen →",
         walletsTitle: "Meine Geldbörsen",
@@ -1469,7 +1474,9 @@
         lang: "id",
         usdRate: 16000,
         eurRate: 17500,
-        hiddenBalance: false
+        hiddenBalance: false,
+        hideHome: false,
+        hideWallets: false
       },
       categories: {
         income: ["Gaji", "Freelance", "Bonus", "Investasi", "Hadiah", "Lainnya"],
@@ -1617,7 +1624,10 @@
     };
 
     const fmtMoney = (amt, cur = state.preferences.currency, maskable = false) => {
-      if (maskable && state.preferences.hiddenBalance) return "••••••";
+      const masked = maskable === "home" ? state.preferences.hideHome
+        : maskable === "wallets" ? state.preferences.hideWallets
+        : false;
+      if (masked) return "••••••";
       const val = Number(amt) || 0;
       const loc = T().locale;
       try {
@@ -1925,7 +1935,7 @@
         <option value="show">${esc(t.showBalance)}</option>
         <option value="hide">${esc(t.hideBalance)}</option>
       `;
-      $("privacy-setting").value = state.preferences.hiddenBalance ? "hide" : "show";
+      $("privacy-setting").value = state.preferences.hideHome ? "hide" : "show";
       $("lbl-pref-note").textContent = t.prefNote;
       $("lbl-data-mgmt").textContent = t.dataMgmt;
       $("lbl-data-mgmt-desc").textContent = t.dataMgmtDesc;
@@ -2019,7 +2029,7 @@
     // =====================================================
     const walletById = id => state.wallets.find(w => w.id === id);
 
-    const txRowHtml = tx => {
+    const txRowHtml = (tx, txMask = null) => {
       const w = walletById(tx.walletId);
       const wTo = tx.toWalletId ? walletById(tx.toWalletId) : null;
       const isInc = tx.type === "income";
@@ -2035,10 +2045,10 @@
           <span class="tx-icon" style="background:${bg};">${sym}</span>
           <div class="flex-1 min-w-0">
             <p class="font-extrabold text-sm sm:text-base truncate">${esc(tx.category)}</p>
-            <p class="muted text-xs font-bold truncate">${esc(tx.note || subWallet)} · ${esc(fmtDate(tx.date))}</p>
+            <p class="muted text-xs font-bold truncate">${tx.note ? esc(tx.note) + " · " : ""}${esc(fmtDate(tx.date))}</p>
           </div>
           <div class="tx-amount shrink-0">
-            <p class="font-extrabold text-sm sm:text-base" style="color:${color};">${sign}${esc(fmtMoney(convAmt, state.preferences.currency, true))}</p>
+            <p class="font-extrabold text-sm sm:text-base" style="color:${color};">${sign}${esc(fmtMoney(convAmt, state.preferences.currency, txMask))}</p>
             <p class="muted text-[11px] font-bold">${esc(subWallet)}</p>
           </div>
         </button>
@@ -2054,53 +2064,55 @@
     const renderHome = () => {
       const t = T();
       const totalIDR = state.wallets.reduce((sum, w) => sum + toIDR(w.balance, w.currency), 0);
-      $("total-balance").textContent = fmtMoney(fromIDR(totalIDR, state.preferences.currency), state.preferences.currency, true);
-      $("privacy-btn").innerHTML = `<i data-lucide="${state.preferences.hiddenBalance ? "eye-off" : "eye"}"></i>`;
+      $("total-balance").textContent = fmtMoney(fromIDR(totalIDR, state.preferences.currency), state.preferences.currency, "home");
+      $("privacy-btn").innerHTML = `<i data-lucide="${state.preferences.hideHome ? "eye-off" : "eye"}"></i>`;
       lucide.createIcons({ nodes: [$("privacy-btn")] });
 
       const monthTxs = state.transactions.filter(tx => (tx.date || "").startsWith(THIS_MONTH));
       const incIDR = monthTxs.filter(tx => tx.type === "income").reduce((s, tx) => s + toIDR(tx.amount, tx.currency), 0);
       const expIDR = monthTxs.filter(tx => tx.type === "expense").reduce((s, tx) => s + toIDR(tx.amount, tx.currency), 0);
 
-      $("income-total").textContent = fmtMoney(fromIDR(incIDR, state.preferences.currency), state.preferences.currency, true);
-      $("expense-total").textContent = fmtMoney(fromIDR(expIDR, state.preferences.currency), state.preferences.currency, true);
+      $("income-total").textContent = fmtMoney(fromIDR(incIDR, state.preferences.currency), state.preferences.currency, "home");
+      $("expense-total").textContent = fmtMoney(fromIDR(expIDR, state.preferences.currency), state.preferences.currency, "home");
 
       // Recent Transactions
       const recent = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
       $("recent-list").innerHTML = recent.length
-        ? recent.map(txRowHtml).join("")
+        ? recent.map(tx => txRowHtml(tx, "home")).join("")
         : `<p class="muted text-sm font-bold py-6 text-center">${esc(t.noTx)}</p>`;
       bindTxClicks($("recent-list"));
 
       // Home Cashflow Chart
       const ctx = $("finance-chart");
       if (financeChartInst) financeChartInst.destroy();
+      const shiftMonth = (ym, off) => {
+        const [y, m] = ym.split("-").map(Number);
+        const d = new Date(y, m - 1 + off, 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      };
+      const months = [-2, -1, 0].map(off => shiftMonth(THIS_MONTH, off));
+      const cur = state.preferences.currency;
+      const sumBy = (type, m) => state.transactions
+        .filter(tx => tx.type === type && (tx.date || "").startsWith(m))
+        .reduce((sum, tx) => sum + toIDR(tx.amount, tx.currency), 0);
+      const dataFor = type => months.map(m => fromIDR(sumBy(type, m), cur));
+
       financeChartInst = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: [t.typeIncome, t.typeExpense],
-          datasets: [{
-            data: [
-              fromIDR(incIDR, state.preferences.currency),
-              fromIDR(expIDR, state.preferences.currency)
-            ],
-            backgroundColor: ["#b8d9fb", "#ffadbc"],
-            borderColor: ["#7eb4eb", "#e87a90"],
-            borderWidth: 2,
-            borderRadius: 16,
-            maxBarThickness: 64
-          }]
+          labels: months.map(m => fmtMonthLabel(m)),
+          datasets: [
+            { label: t.typeIncome, data: dataFor("income"), backgroundColor: "#b8d9fb", borderColor: "#7eb4eb", borderWidth: 2, borderRadius: 10, maxBarThickness: 40 },
+            { label: t.typeExpense, data: dataFor("expense"), backgroundColor: "#ffadbc", borderColor: "#e87a90", borderWidth: 2, borderRadius: 10, maxBarThickness: 40 },
+            { label: t.typeTransfer, data: dataFor("transfer"), backgroundColor: "#ffe18c", borderColor: "#e0b84a", borderWidth: 2, borderRadius: 10, maxBarThickness: 40 }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: c => fmtMoney(c.raw, state.preferences.currency)
-              }
-            }
+            legend: { display: true, position: "bottom" },
+            tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtMoney(c.raw, cur)}` } }
           },
           scales: {
             y: { beginAtZero: true, grid: { color: "#f3e5da" } },
@@ -2115,6 +2127,8 @@
     // =====================================================
     const renderWallets = () => {
       const t = T();
+      $("wallets-privacy-btn").innerHTML = `<i data-lucide="${state.preferences.hideWallets ? "eye-off" : "eye"}"></i>`;
+      lucide.createIcons({ nodes: [$("wallets-privacy-btn")] });
       $("wallet-list").innerHTML = state.wallets.map(w => `
         <article class="surface bg-white p-5 flex flex-col justify-between gap-4">
           <div class="flex items-center gap-3.5">
@@ -2127,9 +2141,9 @@
             </div>
           </div>
           <div>
-            <p class="font-extrabold text-2xl break-all">${esc(fmtMoney(w.balance, w.currency, true))}</p>
+            <p class="font-extrabold text-2xl break-all">${esc(fmtMoney(w.balance, w.currency, "wallets"))}</p>
             ${w.currency !== state.preferences.currency
-              ? `<p class="muted text-xs font-bold mt-0.5">≈ ${esc(fmtMoney(convert(w.balance, w.currency), state.preferences.currency, true))}</p>`
+              ? `<p class="muted text-xs font-bold mt-0.5">≈ ${esc(fmtMoney(convert(w.balance, w.currency), state.preferences.currency, "wallets"))}</p>`
               : ""}
           </div>
           <div class="flex gap-2">
@@ -2526,7 +2540,7 @@
       renderActivityChart(list);
 
       $("activity-list").innerHTML = list.length
-        ? list.map(txRowHtml).join("")
+        ? list.map(tx => txRowHtml(tx)).join("")
         : `<p class="muted text-sm font-bold py-6 text-center">${esc(t.noTx)}</p>`;
       bindTxClicks($("activity-list"));
     };
@@ -3442,7 +3456,7 @@
       $("default-currency").value = state.preferences.currency;
       $("usd-rate").value = state.preferences.usdRate;
       $("eur-rate").value = state.preferences.eurRate;
-      $("privacy-setting").value = state.preferences.hiddenBalance ? "hide" : "show";
+      $("privacy-setting").value = state.preferences.hideHome ? "hide" : "show";
 
       // Categories
       $("income-category-tab").classList.toggle("selected-tab", selectedCategoryTab === "income");
@@ -3679,8 +3693,15 @@
     $("default-currency").addEventListener("change", e => { state.preferences.currency = e.target.value; saveState(); renderAll(); });
     $("display-lang").addEventListener("change", e => { state.preferences.lang = e.target.value; saveState(); renderAll(); });
     $("auth-lang").addEventListener("change", e => { state.preferences.lang = e.target.value; saveState(); applyTranslations(); });
-    $("privacy-btn").addEventListener("click", () => { state.preferences.hiddenBalance = !state.preferences.hiddenBalance; saveState(); renderAll(); });
-    $("privacy-setting").addEventListener("change", e => { state.preferences.hiddenBalance = e.target.value === "hide"; saveState(); renderAll(); });
+    $("privacy-btn").addEventListener("click", () => { state.preferences.hideHome = !state.preferences.hideHome; saveState(); renderAll(); });
+    $("wallets-privacy-btn").addEventListener("click", () => { state.preferences.hideWallets = !state.preferences.hideWallets; saveState(); renderAll(); });
+    $("privacy-setting").addEventListener("change", e => {
+      const hide = e.target.value === "hide";
+      state.preferences.hideHome = hide;
+      state.preferences.hideWallets = hide;
+      saveState();
+      renderAll();
+    });
     $("usd-rate").addEventListener("change", e => { state.preferences.usdRate = Math.max(1, Number(e.target.value) || 16000); saveState(); renderAll(); });
     $("eur-rate").addEventListener("change", e => { state.preferences.eurRate = Math.max(1, Number(e.target.value) || 17500); saveState(); renderAll(); });
 
