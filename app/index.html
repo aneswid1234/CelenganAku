@@ -1,1 +1,4072 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celengan Aku</title>
+  <!-- Tailwind CSS, Chart.js, Lucide Icons, Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #48342f;
+      --muted: #806b68;
+      --cream: #fff5e9;
+      --edge: #e9cfc0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--cream);
+      font-family: "DM Sans", sans-serif;
+    }
+    .app-wrap {
+      width: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: var(--cream);
+      background-image:
+        radial-gradient(circle at 4% 14%, #f8cce0 0 85px, transparent 88px),
+        radial-gradient(circle at 96% 28%, #eed9fa 0 115px, transparent 118px),
+        radial-gradient(circle at 78% 90%, #fff0b7 0 125px, transparent 128px);
+    }
+    .main-inner {
+      max-width: 1240px;
+      margin: auto;
+      padding: 20px clamp(14px, 3vw, 36px) 44px;
+    }
+    h1, h2, h3 {
+      font-family: "Fraunces", Georgia, serif;
+      letter-spacing: -0.03em;
+    }
+    /* Claymorphic Surfaces */
+    .surface, .soft-surface, .sticker, .modal-panel {
+      position: relative;
+      border: 2px solid rgba(126, 79, 75, 0.13);
+      border-radius: 28px 31px 27px 32px / 30px 27px 33px 28px;
+      box-shadow:
+        inset 0 3px 3px rgba(255, 255, 255, 0.66),
+        inset 0 -5px 8px rgba(140, 87, 81, 0.09),
+        0 7px 0 rgba(126, 81, 73, 0.13),
+        0 16px 26px rgba(98, 61, 69, 0.12);
+    }
+    .soft-surface {
+      border-radius: 24px 26px 23px 27px / 25px 23px 26px 24px;
+      box-shadow:
+        inset 0 3px 4px #ffffffa8,
+        inset 0 -5px 8px #9b656314,
+        0 5px 0 #80514a1b,
+        0 11px 19px #6e405414;
+    }
+    .surface::before, .soft-surface::before {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      left: 7%;
+      right: 16%;
+      top: 4px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(#ffffff75, #ffffff00);
+      filter: blur(3px);
+    }
+    /* Clay Buttons */
+    .app-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 18px 20px 17px 19px / 19px 17px 20px 18px;
+      padding: 10px 16px;
+      font-weight: 800;
+      border: 1.5px solid rgba(128, 81, 74, 0.16);
+      box-shadow:
+        inset 0 3px 3px #ffffff9c,
+        inset 0 -4px 5px #8855511d,
+        0 5px 0 #69413b3a,
+        0 9px 15px #65473b22;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+    .app-button:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 3px 3px #ffffff9c,
+        inset 0 -4px 5px #8855511d,
+        0 7px 0 #69413b32,
+        0 13px 18px #65473b22;
+    }
+    .app-button:active {
+      transform: translateY(3px);
+      box-shadow: inset 0 2px 4px #8855511d, 0 1px 0 #69413b3a;
+    }
+    .light-button {
+      background: #fffaf5;
+      border: 2px solid var(--edge);
+      color: var(--ink);
+    }
+    /* Navigation */
+    .nav-shell {
+      border: 1.5px solid #ead5c8;
+      box-shadow: inset 0 2px 3px #fff, 0 5px 0 #d5bdb060, 0 10px 17px #815c4b15;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px 14px;
+      border-radius: 17px;
+      font-weight: 800;
+      color: var(--muted);
+      white-space: nowrap;
+      transition: transform 0.18s, background 0.18s, color 0.18s;
+    }
+    .nav-item:hover {
+      transform: translateY(-2px);
+      background: #fff4ed;
+      color: var(--ink);
+    }
+    .nav-item.active {
+      background: #e9d8f8;
+      color: var(--ink);
+      box-shadow: inset 0 3px 3px #ffffffa8, inset 0 -4px 5px #9b79b83b, 0 4px 0 #cbb1e6;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
+    /* Form Fields */
+    .field {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 13px;
+      border: 2px solid #ead8cc;
+      border-radius: 16px;
+      background: #fffdf9;
+      color: var(--ink);
+      box-shadow: inset 0 3px 5px #79534a0d;
+    }
+    .field-label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 5px;
+      font-size: 13.5px;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid #8466bd;
+      outline-offset: 2px;
+    }
+    .muted { color: var(--muted); }
+    [hidden] { display: none !important; }
+
+    /* Transactions */
+    .tx-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 13px 6px;
+      border-bottom: 1px solid #eaded7;
+      text-align: left;
+      border-radius: 14px;
+      transition: background 0.15s;
+    }
+    .tx-row:hover { background: #fff7ef; }
+    .tx-row:last-child { border-bottom: 0; }
+    .tx-icon {
+      flex: none;
+      width: 44px;
+      height: 44px;
+      border: 1px solid #ffffffaa;
+      border-radius: 16px 19px 15px 18px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      box-shadow: inset 0 3px 3px #ffffff90, inset 0 -4px 5px #6e405423, 0 4px 0 #8b5c5136;
+      transition: transform 0.2s;
+    }
+    .tx-row:hover .tx-icon { transform: rotate(-6deg) scale(1.06); }
+    .tx-amount { max-width: 44%; overflow-wrap: anywhere; text-align: right; }
+
+    /* Charts */
+    .chart-box { position: relative; height: 260px; width: 100%; }
+    .chart-box.compact { height: 145px; }
+
+    /* Modals & Toast */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(57, 46, 64, 0.58);
+      backdrop-filter: blur(3px);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+    .modal-panel {
+      width: min(100%, 540px);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #fff6ed;
+      padding: 24px;
+    }
+    #toast-container {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast-item {
+      pointer-events: auto;
+      background: #fffdf9;
+      color: var(--ink);
+      border: 2px solid #d7c0ef;
+      border-radius: 18px;
+      padding: 12px 16px;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 6px 0 #cbb1e6, 0 12px 20px rgba(72, 52, 47, 0.16);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn 0.25s ease-out;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Decorative Clay Elements */
+    .sticker {
+      background: #fff8ed;
+      padding: 8px;
+      transform: rotate(5deg);
+      box-shadow: inset 0 3px 4px #fff, 0 5px 0 #d8bda8, 0 12px 17px #714e4526;
+    }
+    .balance-blob {
+      position: absolute;
+      right: -47px;
+      bottom: -77px;
+      width: 210px;
+      height: 210px;
+      border-radius: 46% 54% 51% 49%;
+      background: linear-gradient(135deg, #fff9e179, #ffffff0b);
+      box-shadow: inset 12px 13px 17px #ffffff55;
+    }
+    .clay-disk {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 43% 57% 49% 51%;
+      background: #fff9ec;
+      box-shadow: inset 0 3px 3px #fff, 0 3px 0 #bb998a54, 0 6px 10px #7c534432;
+    }
+    .clay-disk svg { width: 17px; height: 17px; }
+    .clay-wallet {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px 20px 17px 19px;
+      background: #dfc9f5;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: inset 0 4px 4px #ffffffb5, inset 0 -6px 7px #8c6dae40, 0 5px 0 #b695cd;
+    }
+    .clay-wallet img { width: 100%; height: 100%; object-fit: cover; }
+    .clay-progress {
+      height: 11px;
+      border-radius: 999px;
+      background: #f3e4d8;
+      overflow: hidden;
+      box-shadow: inset 0 2px 3px #8a5f4a1c, 0 2px 0 #fff;
+    }
+    .clay-progress > div {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+      box-shadow: inset 0 2px 2px #ffffffa8, inset 0 -2px 2px #415f4930;
+    }
+    .selected-tab {
+      background: #d9c6f5 !important;
+      border-color: #b796e2 !important;
+    }
+
+    /* Auth / Login Screen */
+    .auth-screen {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 16px 28px;
+      background-color: var(--cream);
+      background-image:
+        radial-gradient(circle at 8% 16%, #f8cce0 0 95px, transparent 98px),
+        radial-gradient(circle at 92% 22%, #eed9fa 0 120px, transparent 123px),
+        radial-gradient(circle at 18% 86%, #b8d9fb 0 85px, transparent 88px),
+        radial-gradient(circle at 84% 88%, #fff0b7 0 130px, transparent 133px);
+    }
+    .auth-tab-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--muted);
+      transition: all 0.18s ease;
+    }
+    .auth-tab-btn.active {
+      background: #e9d8f8;
+      color: var(--ink);
+      box-shadow: inset 0 3px 3px #ffffffa8, inset 0 -4px 5px #9b79b83b, 0 4px 0 #cbb1e6;
+    }
+    .pw-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .pw-wrap .field { padding-right: 44px; }
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+    }
+    .pw-toggle:hover { background: #f5e8de; color: var(--ink); }
+
+    /* Mobile Fixed Bottom Navigation (20% larger) */
+    .bottom-nav { display: none; }
+    @media (max-width: 820px) {
+      .desktop-nav { display: none !important; }
+      .main-inner { padding-bottom: 118px; }
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        width: 100%;
+        justify-content: space-around;
+        align-items: center;
+        background: #fff9f0;
+        border-top: 2px solid #ead8cc;
+        padding: 10px 4px max(12px, env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 18px rgba(105, 71, 59, 0.12);
+      }
+      .bottom-nav .nav-item {
+        flex: 1;
+        flex-direction: column;
+        font-size: 11.5px;
+        gap: 4px;
+        padding: 8px 3px;
+        border-radius: 18px;
+        min-width: 0;
+      }
+      .bottom-nav .nav-item svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+    @media (max-width: 440px) {
+      .bottom-nav .nav-item { font-size: 10.5px; }
+      .balance-figure { font-size: clamp(26px, 8vw, 42px) !important; }
+      .app-button { padding: 9px 11px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- HALAMAN LOGIN & DAFTAR (FIRST-ENTRY SCREEN) -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="w-full max-w-md flex justify-end">
+      <label class="sr-only" for="auth-lang">Bahasa</label>
+      <select id="auth-lang" class="field !w-auto !min-h-0 !py-2 font-bold text-sm" aria-label="Bahasa">
+        <option value="id">🇮🇩 ID</option>
+        <option value="en">🇬🇧 EN</option>
+        <option value="de">🇩🇪 DE</option>
+      </select>
+    </div>
+
+    <div class="w-full max-w-md my-auto py-4">
+      <div class="surface bg-[#fffdf9] p-6 sm:p-8">
+        <div class="flex flex-col items-center text-center mb-5">
+          <img
+            id="auth-logo-img"
+            class="h-16 sm:h-20 w-auto object-contain mb-2"
+            src="https://raw.githubusercontent.com/aneswid1234/CelenganAku/8be8409a05f02d92dff1fc90894ec71fb56ae035/assets/Logo%20Celengan%20Aku.png"
+            alt="Logo Celengan Aku"
+          >
+          <p id="auth-subtitle" class="muted text-xs sm:text-sm font-bold"></p>
+        </div>
+
+        <!-- Tabs: Masuk & Daftar -->
+        <div class="flex gap-1.5 p-1.5 rounded-[20px] bg-[#fff5eb] border border-[#eeded2] mb-5">
+          <button id="tab-login" type="button" class="auth-tab-btn active"></button>
+          <button id="tab-register" type="button" class="auth-tab-btn"></button>
+        </div>
+
+        <!-- Inline Error Message -->
+        <div id="auth-error" hidden class="mb-4 p-3 rounded-2xl text-xs font-extrabold flex items-center gap-2" style="background:#ffadbc;color:#5c1f2e;">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+          <span id="auth-error-text"></span>
+        </div>
+
+        <!-- Form Masuk (Login) -->
+        <form id="login-form" class="space-y-4" novalidate>
+          <div>
+            <label id="lbl-login-id" class="field-label" for="login-identifier"></label>
+            <input id="login-identifier" class="field" type="text" autocomplete="username" placeholder="nama@email.com / @username">
+          </div>
+          <div>
+            <label id="lbl-login-pw" class="field-label" for="login-password"></label>
+            <div class="pw-wrap">
+              <input id="login-password" class="field" type="password" autocomplete="current-password" placeholder="••••••••">
+              <button id="toggle-login-pw" type="button" class="pw-toggle" aria-label="Toggle password">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-2 text-xs font-bold">
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input id="login-remember" type="checkbox" checked class="w-4 h-4 accent-[#8466bd] rounded">
+              <span id="lbl-remember-me"></span>
+            </label>
+            <button id="btn-forgot-pw" type="button" class="underline font-extrabold" style="color:#76529d;"></button>
+          </div>
+          <button id="btn-login-submit" type="submit" class="app-button w-full text-sm" style="background:#d9c6f5;color:#48342f;"></button>
+
+        </form>
+
+        <!-- Form Daftar (Register) -->
+        <form id="register-form" class="space-y-3.5" hidden novalidate>
+          <div>
+            <label id="lbl-reg-name" class="field-label" for="reg-name"></label>
+            <input id="reg-name" class="field" type="text" autocomplete="name">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label id="lbl-reg-user" class="field-label" for="reg-username"></label>
+              <input id="reg-username" class="field" type="text" placeholder="@nama.kamu">
+            </div>
+            <div>
+              <label id="lbl-reg-email" class="field-label" for="reg-email"></label>
+              <input id="reg-email" class="field" type="email" autocomplete="email" placeholder="nama@email.com">
+            </div>
+          </div>
+          <div>
+            <label id="lbl-reg-pw" class="field-label" for="reg-password"></label>
+            <div class="pw-wrap">
+              <input id="reg-password" class="field" type="password" autocomplete="new-password" placeholder="Min. 6 karakter">
+              <button id="toggle-reg-pw" type="button" class="pw-toggle" aria-label="Toggle password">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label id="lbl-reg-confirm" class="field-label" for="reg-confirm"></label>
+            <div class="pw-wrap">
+              <input id="reg-confirm" class="field" type="password" autocomplete="new-password" placeholder="••••••••">
+              <button id="toggle-reg-confirm" type="button" class="pw-toggle" aria-label="Toggle confirm password">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <button id="btn-reg-submit" type="submit" class="app-button w-full text-sm mt-1" style="background:#c5ebce;color:#48342f;"></button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="text-center pt-2">
+      <p class="muted font-bold text-xs">Celengan Aku · Developed by a.nes.w</p>
+    </footer>
+  </div>
+
+  <!-- APLIKASI UTAMA -->
+  <div id="app-main-wrap" class="app-wrap" hidden>
+    <div class="main-inner">
+      <!-- HEADER -->
+      <header class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <a href="#home" id="logo-link" class="flex items-center shrink-0">
+          <img
+            id="brand-logo-img"
+            class="h-14 sm:h-16 w-auto object-contain object-left"
+            src="https://raw.githubusercontent.com/aneswid1234/CelenganAku/8be8409a05f02d92dff1fc90894ec71fb56ae035/assets/Logo%20Celengan%20Aku.png"
+            alt="Logo Celengan Aku"
+          >
+        </a>
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="badge-tagline" class="hidden sm:inline-block rounded-full px-3 py-2 font-extrabold text-xs shadow-[inset_0_2px_3px_#fff9,0_3px_0_#bfa7d3]" style="background:#e9d8f8;color:#48342f;">TEMAN MENABUNG ✦</span>
+          <label class="sr-only" for="display-currency">Mata uang</label>
+          <select id="display-currency" class="field !w-auto !min-h-0 !py-2 font-bold text-sm" aria-label="Mata uang">
+            <option value="IDR">IDR</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+          <label class="sr-only" for="display-lang">Bahasa</label>
+          <select id="display-lang" class="field !w-auto !min-h-0 !py-2 font-bold text-sm" aria-label="Bahasa">
+            <option value="id">🇮🇩 ID</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="de">🇩🇪 DE</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- DESKTOP NAV -->
+      <nav id="desktop-nav" class="desktop-nav nav-shell flex flex-wrap gap-1 mb-6 p-2 rounded-[22px] bg-white/80 w-fit" aria-label="Navigasi utama"></nav>
+
+      <main>
+        <!-- 1. BERANDA -->
+        <section id="home" class="page">
+          <div class="flex justify-between items-center gap-4 mb-5">
+            <div>
+              <p id="home-greeting" class="font-bold mb-1 muted text-sm sm:text-base"></p>
+              <h1 id="home-title" class="font-extrabold leading-tight text-2xl sm:text-3xl"></h1>
+            </div>
+            <div class="sticker shrink-0">
+              <img
+                id="pig-mascot-img"
+                class="relative w-14 h-14 sm:w-20 sm:h-20 object-contain rounded-2xl"
+                src="https://raw.githubusercontent.com/aneswid1234/CelenganAku/8be8409a05f02d92dff1fc90894ec71fb56ae035/assets/Maskot%20Celengan%20Aku.png"
+                alt="Maskot Celengan Aku"
+              >
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-[1.5fr_1fr] gap-4 mb-5">
+            <section class="surface relative overflow-hidden p-6 sm:p-8" style="background:#ffc6d3;">
+              <span aria-hidden="true" class="balance-blob"></span>
+              <div class="relative">
+                <div class="flex items-center gap-2">
+                  <p id="lbl-total-balance" class="font-extrabold text-sm sm:text-base"></p>
+                  <button id="privacy-btn" type="button" class="clay-disk hover:scale-105" aria-label="Toggle balance visibility">
+                    <i data-lucide="eye"></i>
+                  </button>
+                </div>
+                <p id="total-balance" class="balance-figure text-3xl sm:text-5xl font-extrabold break-all my-3 sm:my-4" aria-live="polite"></p>
+                <p id="lbl-balance-desc" class="font-bold text-sm" style="color:#624e50;"></p>
+              </div>
+            </section>
+
+            <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+              <section class="soft-surface p-4 sm:p-5" style="background:#b8d9fb;">
+                <p id="lbl-month-income" class="font-bold text-sm sm:text-base"></p>
+                <p id="income-total" class="font-extrabold text-lg sm:text-2xl mt-1.5 break-all"></p>
+              </section>
+              <section class="soft-surface p-4 sm:p-5" style="background:#ffadbc;">
+                <p id="lbl-month-expense" class="font-bold text-sm sm:text-base"></p>
+                <p id="expense-total" class="font-extrabold text-lg sm:text-2xl mt-1.5 break-all"></p>
+              </section>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-7">
+            <button id="btn-quick-income" class="app-button min-w-0" type="button" data-action="income" style="background:#b8d9fb;color:#48342f;"></button>
+            <button id="btn-quick-expense" class="app-button min-w-0" type="button" data-action="expense" style="background:#ffadbc;color:#48342f;"></button>
+            <button id="btn-quick-transfer" class="app-button min-w-0" type="button" data-action="transfer" style="background:#ffe18c;color:#48342f;"></button>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-5">
+            <section class="surface bg-[#fffdf8] p-5 min-w-0">
+              <h2 id="lbl-cashflow" class="font-extrabold text-xl sm:text-2xl mb-3"></h2>
+              <div class="chart-box">
+                <canvas id="finance-chart"></canvas>
+              </div>
+            </section>
+            <section class="surface bg-[#fffdf8] p-5 min-w-0">
+              <div class="flex justify-between items-center gap-2 mb-2">
+                <h2 id="lbl-recent-tx" class="font-extrabold text-xl sm:text-2xl"></h2>
+                <button id="btn-see-all" class="font-extrabold underline text-sm" type="button" data-page="activity" style="color:#76529d;"></button>
+              </div>
+              <div id="recent-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 2. DOMPET -->
+        <section id="wallets" class="page" hidden>
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+            <div>
+              <h1 id="wallets-title" class="font-extrabold text-2xl sm:text-3xl"></h1>
+              <p id="wallets-subtitle" class="muted font-bold text-sm mt-1"></p>
+            </div>
+            <button id="btn-add-wallet" class="app-button" type="button" data-action="wallet" style="background:#d9c6f5;color:#48342f;"></button>
+          </div>
+          <div id="wallet-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- 3. AKTIVITAS -->
+        <section id="activity" class="page" hidden>
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+            <h1 id="activity-title" class="font-extrabold text-2xl sm:text-3xl"></h1>
+            <button id="copy-csv" class="app-button light-button text-sm" type="button"></button>
+          </div>
+
+          <!-- 3.1 Form Filter -->
+          <div class="surface bg-white p-4 sm:p-5 mb-5">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div>
+                <label id="lbl-filter-search" class="field-label" for="search"></label>
+                <input id="search" class="field" type="search">
+              </div>
+              <div>
+                <label id="lbl-filter-type" class="field-label" for="type-filter"></label>
+                <select id="type-filter" class="field"></select>
+              </div>
+              <div>
+                <label id="lbl-filter-cat" class="field-label" for="category-filter"></label>
+                <select id="category-filter" class="field"></select>
+              </div>
+              <div>
+                <label id="lbl-filter-wallet" class="field-label" for="wallet-filter"></label>
+                <select id="wallet-filter" class="field"></select>
+              </div>
+              <div>
+                <label id="lbl-filter-from" class="field-label" for="date-from"></label>
+                <input id="date-from" class="field" type="date">
+              </div>
+              <div>
+                <label id="lbl-filter-to" class="field-label" for="date-to"></label>
+                <input id="date-to" class="field" type="date">
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <button id="btn-reset-filter" type="button" class="app-button light-button !py-2 !px-4 text-xs"></button>
+            </div>
+          </div>
+
+          <!-- 3.2 Summary Cards (Blue Income & Pink Expense) -->
+          <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-5">
+            <section class="soft-surface p-4 sm:p-5" style="background:#b8d9fb;">
+              <p id="lbl-filtered-income" class="font-bold text-sm sm:text-base"></p>
+              <p id="filtered-income-total" class="font-extrabold text-lg sm:text-2xl mt-1 break-all"></p>
+            </section>
+            <section class="soft-surface p-4 sm:p-5" style="background:#ffadbc;">
+              <p id="lbl-filtered-expense" class="font-bold text-sm sm:text-base"></p>
+              <p id="filtered-expense-total" class="font-extrabold text-lg sm:text-2xl mt-1 break-all"></p>
+            </section>
+          </div>
+
+          <!-- 3.3 Dynamic Chart Card -->
+          <section class="surface bg-[#fffdf8] p-5 mb-5 min-w-0">
+            <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+              <div>
+                <h2 id="lbl-activity-chart" class="font-extrabold text-xl"></h2>
+                <p id="lbl-activity-chart-sub" class="muted text-xs font-bold"></p>
+              </div>
+              <select id="activity-chart-type" class="field !w-auto !min-h-0 !py-2 text-sm font-bold" aria-label="Chart view"></select>
+            </div>
+            <div id="activity-chart-container" class="chart-box">
+              <canvas id="activity-chart"></canvas>
+            </div>
+          </section>
+
+          <!-- 3.4 Filtered List -->
+          <div id="activity-list" class="surface bg-white p-4 sm:p-5"></div>
+        </section>
+
+        <!-- 4. BUDGET -->
+        <section id="budget" class="page" hidden>
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+            <div>
+              <h1 id="budget-page-title" class="font-extrabold text-2xl sm:text-3xl"></h1>
+              <p id="budget-subtitle" class="muted text-sm font-bold mt-1"></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="budget-month-filter" class="field !w-auto !min-h-0 !py-2 font-bold" type="month" aria-label="Budget month">
+              <button id="btn-add-budget" class="app-button" type="button" data-action="budget" style="background:#d9c6f5;color:#48342f;"></button>
+            </div>
+          </div>
+
+          <div class="surface p-5 grid grid-cols-3 gap-3 mb-5" style="background:#d9c6f5;">
+            <div>
+              <p id="lbl-budget-total" class="font-bold text-xs sm:text-sm"></p>
+              <strong id="budget-total" class="block text-base sm:text-xl mt-1 break-all"></strong>
+            </div>
+            <div>
+              <p id="lbl-budget-spent" class="font-bold text-xs sm:text-sm"></p>
+              <strong id="budget-spent" class="block text-base sm:text-xl mt-1 break-all"></strong>
+            </div>
+            <div>
+              <p id="lbl-budget-left" class="font-bold text-xs sm:text-sm"></p>
+              <strong id="budget-left" class="block text-base sm:text-xl mt-1 break-all"></strong>
+            </div>
+          </div>
+
+          <div id="budget-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- 5. PATUNGAN (SPLIT BILL) -->
+        <section id="splitbill" class="page" hidden>
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+            <div>
+              <h1 id="split-title" class="font-extrabold text-2xl sm:text-3xl"></h1>
+              <p id="split-subtitle" class="muted text-sm font-bold mt-1"></p>
+            </div>
+            <button id="btn-new-bill" class="app-button" type="button" style="background:#ffe18c;color:#48342f;"></button>
+          </div>
+
+          <!-- Bill Cards Selector -->
+          <div id="bill-selector" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6"></div>
+
+          <!-- Active Bill Detail -->
+          <div id="active-bill-panel"></div>
+        </section>
+
+        <!-- 6. PROFIL -->
+        <section id="profile" class="page" hidden>
+          <h1 id="profile-title" class="font-extrabold text-2xl sm:text-3xl mb-5"></h1>
+          <div class="grid md:grid-cols-2 gap-5">
+            <!-- Kartu 1: Informasi Pengguna -->
+            <section class="surface p-6 flex flex-col justify-between" style="background:#c5ebce;">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-4">
+                  <h2 id="lbl-user-info" class="font-extrabold text-xl sm:text-2xl"></h2>
+                  <button id="btn-edit-profile" type="button" class="app-button light-button !py-2 !px-3.5 text-xs"></button>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div id="profile-avatar-box" class="w-16 h-16 rounded-2xl bg-[#fff8ed] border-2 border-[#a8d6b4] overflow-hidden grid place-items-center text-2xl font-extrabold shrink-0 shadow-sm"></div>
+                  <div class="min-w-0">
+                    <p id="profile-name-display" class="font-extrabold text-lg truncate"></p>
+                    <p id="profile-username-display" class="font-bold text-sm" style="color:#4a6b54;"></p>
+                    <p id="profile-email-display" class="muted text-xs sm:text-sm truncate"></p>
+                  </div>
+                </div>
+                <p id="profile-bio-display" class="mt-4 text-sm font-semibold rounded-2xl bg-white/60 p-3.5"></p>
+              </div>
+              <div class="pt-5 mt-5 border-t-2 border-[#a8d6b4]/60">
+                <button id="btn-logout" type="button" class="app-button w-full text-sm" style="background:#ffadbc;color:#48342f;">
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                  <span id="lbl-logout"></span>
+                </button>
+              </div>
+            </section>
+
+            <!-- Kartu 2: Preferensi + Manajemen Data -->
+            <section class="surface bg-white p-6 space-y-4">
+              <h2 id="lbl-preferences" class="font-extrabold text-xl sm:text-2xl"></h2>
+              <div>
+                <label id="lbl-pref-currency" class="field-label" for="default-currency"></label>
+                <select id="default-currency" class="field">
+                  <option value="IDR">IDR (Rupiah)</option>
+                  <option value="USD">USD (US Dollar)</option>
+                  <option value="EUR">EUR (Euro)</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label id="lbl-pref-usd" class="field-label" for="usd-rate"></label>
+                  <input id="usd-rate" class="field" type="number" min="1" step="100">
+                </div>
+                <div>
+                  <label id="lbl-pref-eur" class="field-label" for="eur-rate"></label>
+                  <input id="eur-rate" class="field" type="number" min="1" step="100">
+                </div>
+              </div>
+              <div>
+                <label id="lbl-pref-privacy" class="field-label" for="privacy-setting"></label>
+                <select id="privacy-setting" class="field"></select>
+              </div>
+              <p id="lbl-pref-note" class="muted text-xs font-bold"></p>
+
+              <!-- Manajemen Data (Export JSON & Export CSV) -->
+              <div class="pt-4 mt-4 border-t-2 border-[#f0e0d4]">
+                <h3 id="lbl-data-mgmt" class="font-extrabold text-lg mb-1"></h3>
+                <p id="lbl-data-mgmt-desc" class="muted text-xs font-bold mb-3.5"></p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button id="btn-export-json" type="button" class="app-button w-full text-sm" style="background:#b8d9fb;color:#48342f;">
+                    <i data-lucide="file-json" class="w-4 h-4"></i>
+                    <span id="lbl-export-json">Export JSON</span>
+                  </button>
+                  <button id="btn-export-csv" type="button" class="app-button w-full text-sm" style="background:#c5ebce;color:#48342f;">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span id="lbl-export-csv">Export CSV</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Kartu 3: Kelola Kategori -->
+            <section class="surface bg-white p-6 md:col-span-2">
+              <h2 id="lbl-manage-cat" class="font-extrabold text-xl sm:text-2xl"></h2>
+              <p id="lbl-manage-cat-desc" class="muted text-sm font-bold mt-1"></p>
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button id="income-category-tab" class="app-button light-button text-sm" type="button"></button>
+                <button id="expense-category-tab" class="app-button light-button text-sm" type="button"></button>
+              </div>
+              <form id="category-form" class="flex flex-wrap gap-2 mt-4 items-end">
+                <div class="flex-1 min-w-[200px]">
+                  <label id="lbl-new-cat" class="field-label" for="new-category"></label>
+                  <input id="new-category" class="field" maxlength="32" required>
+                </div>
+                <button id="btn-add-cat" class="app-button text-sm" type="submit" style="background:#e6b9ed;color:#48342f;"></button>
+              </form>
+              <div id="category-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-4"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer class="mt-12 text-center">
+        <p class="muted font-bold text-xs">Celengan Aku · Developed by a.nes.w</p>
+      </footer>
+    </div>
+
+    <!-- MOBILE FIXED BOTTOM NAV -->
+    <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  </div>
+
+  <!-- MODAL UNIVERSAL -->
+  <div id="app-modal" class="modal" hidden role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <div class="flex justify-between items-center gap-2 mb-4">
+        <h2 id="modal-title" class="font-extrabold text-xl"></h2>
+        <button id="modal-close" type="button" class="app-button light-button !p-2" aria-label="Close">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    const STORAGE_KEY = "celengan_aku_state_v5";
+    const $ = id => document.getElementById(id);
+
+    // Safe SVG fallbacks for external GitHub images
+    const setupImageFallback = (imgId, svgStr) => {
+      const el = $(imgId);
+      if (el) {
+        el.addEventListener("error", () => {
+          el.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
+        }, { once: true });
+      }
+    };
+    const LOGO_FALLBACK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 72"><rect width="240" height="72" rx="18" fill="#fff8ed"/><text x="16" y="45" font-family="Fraunces,Georgia,serif" font-weight="800" font-size="26" fill="#48342f">Celengan Aku</text></svg>`;
+    setupImageFallback("brand-logo-img", LOGO_FALLBACK_SVG);
+    setupImageFallback("auth-logo-img", LOGO_FALLBACK_SVG);
+    setupImageFallback("pig-mascot-img", `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="16" r="8" fill="#ffd166" stroke="#48342f" stroke-width="2.5"/><ellipse cx="40" cy="46" rx="25" ry="20" fill="#ff9eb5" stroke="#48342f" stroke-width="2.5"/><ellipse cx="40" cy="48" rx="9" ry="6" fill="#ffc6d3" stroke="#48342f" stroke-width="2.2"/><circle cx="37" cy="48" r="1.6" fill="#48342f"/><circle cx="43" cy="48" r="1.6" fill="#48342f"/></svg>`);
+
+    // =====================================================
+    // TRANSLATIONS (ID, EN, DE) — Categories stay untouched
+    // =====================================================
+    const I18N = {
+      id: {
+        locale: "id-ID",
+        tagline: "TEMAN MENABUNG ✦",
+        nav: { home: "Beranda", wallets: "Dompet", activity: "Aktivitas", budget: "Budget", splitbill: "Patungan", profile: "Profil" },
+        greeting: name => `Halo, ${name}! 👋`,
+        homeTitle: "Ringkasan Keuanganmu",
+        totalBalance: "Total Saldo",
+        balanceDesc: "Gabungan seluruh dompet aktifmu",
+        monthIncome: "↙ Pemasukan bulan ini",
+        monthExpense: "↗ Pengeluaran bulan ini",
+        btnIncome: "＋ Pemasukan",
+        btnExpense: "＋ Pengeluaran",
+        btnTransfer: "⇄ Transfer",
+        cashflow: "Arus Kas Bulan Ini ✦",
+        recentTx: "Transaksi Terbaru",
+        seeAll: "Lihat semua →",
+        walletsTitle: "Dompet Saya",
+        walletsSub: "Kelola rekening, e-wallet, dan uang tunai lengkap dengan logo kustom.",
+        addWallet: "＋ Tambah Dompet",
+        edit: "Edit",
+        delete: "Hapus",
+        save: "Simpan",
+        cancel: "Batal",
+        activityTitle: "Aktivitas Transaksi",
+        copyCsv: "Salin CSV",
+        filterSearch: "Cari transaksi",
+        filterSearchPh: "Catatan, kategori, dompet...",
+        filterType: "Jenis transaksi",
+        filterCat: "Kategori",
+        filterWallet: "Dompet",
+        filterFrom: "Dari tanggal",
+        filterTo: "Sampai tanggal",
+        resetFilter: "Reset Filter",
+        allTypes: "Semua jenis",
+        allCats: "Semua kategori",
+        allWallets: "Semua dompet",
+        typeIncome: "Pemasukan",
+        typeExpense: "Pengeluaran",
+        typeTransfer: "Transfer",
+        filteredIncome: "↙ Total Pemasukan (Filter)",
+        filteredExpense: "↗ Total Pengeluaran (Filter)",
+        activityChart: "Ringkasan grafik hasil filter ✦",
+        activityChartSub: "Otomatis menyesuaikan filter di atas",
+        chartBar: "Grafik Batang",
+        chartBlock: "Grafik Balok",
+        chartPie: "Grafik Pie",
+        noTx: "Belum ada transaksi yang sesuai filter.",
+        budgetTitle: m => `Budget Bulan ${m}`,
+        budgetSub: "Pantau batas pengeluaran bulanan per kategori.",
+        addBudget: "＋ Tambah Budget",
+        budgetTotal: "Total Budget",
+        budgetSpent: "Terpakai",
+        budgetLeft: "Sisa Budget",
+        noBudget: "Belum ada budget di bulan ini. Yuk buat satu!",
+        usedPct: p => `${p}% terpakai`,
+        overBudget: "Melebihi batas!",
+        splitTitle: "Patungan (Split Bill)",
+        splitSub: "Bagi tagihan bareng teman, atur pajak/layanan, dan catat cicilan.",
+        newBill: "＋ Tambah Tagihan",
+        noBills: "Belum ada tagihan patungan. Klik Tambah Tagihan untuk mulai!",
+        modeEqual: "Bagi Rata",
+        modeItem: "Bagi Item",
+        modeManual: "Manual",
+        friendsTitle: "Daftar Teman",
+        addFriendPh: "Nama teman baru...",
+        addFriendBtn: "＋ Tambah",
+        itemsTitle: "Item Pesanan",
+        itemNamePh: "Nama makanan / barang",
+        itemPricePh: "Harga",
+        itemQtyPh: "Qty",
+        addItemBtn: "＋ Item",
+        taxLabel: "Pajak",
+        serviceLabel: "Biaya Layanan",
+        typePct: "Persen (%)",
+        typeAmt: "Nominal",
+        subtotal: "Subtotal Item",
+        grandTotal: "Total Tagihan Akhir",
+        breakdownTitle: "Rincian & Status Bayar",
+        copySummary: "Salin Ringkasan",
+        deleteBill: "Hapus Tagihan",
+        statusUnpaid: "⏳ Belum Bayar",
+        statusPartial: p => `🌓 Dicicil (${p}%)`,
+        statusPaid: "✓ Sudah Lunas",
+        paidLabel: "Terbayar",
+        remainLabel: "Sisa",
+        btnInstallment: "＋ Cicil",
+        btnMarkPaid: "✓ Lunasi",
+        btnResetPay: "Reset",
+        collectedLabel: "Terkumpul",
+        settledCount: (a, b) => `${a}/${b} lunas`,
+        manualMatch: "✓ Total nominal pas!",
+        manualShort: diff => `⚠ Kurang ${diff}`,
+        manualOver: diff => `⚠ Kelebihan ${diff}`,
+        selectFriendsHint: "Klik nama teman yang ikut memesan item ini:",
+        profileTitle: "Profil & Pengaturan",
+        userInfo: "Informasi Pengguna",
+        editProfile: "Edit Profil",
+        preferences: "Preferensi",
+        prefCurrency: "Mata uang utama",
+        prefUsd: "Kurs 1 USD ke IDR",
+        prefEur: "Kurs 1 EUR ke IDR",
+        prefPrivacy: "Tampilan saldo",
+        showBalance: "Tampilkan saldo",
+        hideBalance: "Sembunyikan saldo",
+        prefNote: "Kurs dapat disesuaikan manual. Perubahan langsung diterapkan ke seluruh halaman.",
+        dataMgmt: "Manajemen Data",
+        dataMgmtDesc: "Unduh cadangan seluruh data (dompet, transaksi, budget, patungan & profil).",
+        exportJson: "Export JSON",
+        exportCsv: "Export CSV",
+        manageCat: "Kelola Kategori",
+        manageCatDesc: "Kategori dipisahkan antara Pemasukan dan Pengeluaran agar pencatatan lebih rapi.",
+        newCatLabel: "Nama kategori baru",
+        newCatPh: "Misal: Kopi, Bonus Proyek...",
+        addCatBtn: "Tambah kategori",
+        txDetail: "Detail Transaksi",
+        txAddTitle: t => `Tambah ${t}`,
+        txEditTitle: "Edit Transaksi",
+        fieldAmount: "Nominal",
+        fieldCurrency: "Mata uang",
+        fieldDate: "Tanggal",
+        fieldWallet: "Dompet",
+        fieldFromWallet: "Dari Dompet",
+        fieldToWallet: "Ke Dompet",
+        fieldCategory: "Kategori",
+        fieldNote: "Catatan",
+        walletAddTitle: "Tambah Dompet Baru",
+        walletEditTitle: "Edit Dompet",
+        walletName: "Nama Dompet",
+        walletBalance: "Saldo Awal",
+        walletLogo: "Logo Dompet (Opsional)",
+        removeLogo: "Hapus Logo",
+        budgetAddTitle: "Tambah Budget Baru",
+        budgetEditTitle: "Edit Budget",
+        budgetLimit: "Batas Nominal",
+        budgetMonth: "Bulan",
+        editProfileTitle: "Edit Profil Pengguna",
+        fieldAvatar: "Foto Profil (Opsional)",
+        removeAvatar: "Hapus Foto",
+        fieldBio: "Bio Singkat",
+        billModalTitle: "Buat Tagihan Patungan Baru",
+        billName: "Nama Tagihan",
+        billFriends: "Nama Teman (pisahkan dengan koma)",
+        billMode: "Mode Pembagian",
+        instModalTitle: name => `Cicilan — ${name}`,
+        instAmount: "Nominal Pembayaran",
+        instFillRemain: "Isi Sisa",
+        instNote: "Catatan (mis. Transfer BCA DP)",
+        instAddBtn: "Catat Cicilan",
+        instHistory: "Riwayat Cicilan",
+        instEmpty: "Belum ada catatan cicilan.",
+        toastCopyCsv: "Data transaksi berhasil disalin sebagai CSV!",
+        toastCopySummary: "Ringkasan patungan berhasil disalin!",
+        toastSaved: "Perubahan berhasil disimpan!",
+        toastDeleted: "Data berhasil dihapus!",
+        toastExportJson: "Seluruh data berhasil diunduh (JSON)!",
+        toastExportCsv: "Seluruh data berhasil diunduh (CSV)!",
+        authSubtitle: "Catat keuangan & patungan bareng teman dengan santai ✨",
+        tabLogin: "Masuk",
+        tabRegister: "Daftar",
+        loginId: "Email atau Username",
+        loginPw: "Kata sandi",
+        rememberMe: "Ingat saya",
+        forgotPw: "Lupa kata sandi?",
+        btnLogin: "Masuk",
+        authOr: "atau",
+        demoLogin: "Masuk dengan Akun Demo",
+        regName: "Nama Lengkap",
+        regUser: "Username",
+        regEmail: "Email",
+        regPw: "Kata Sandi",
+        regConfirm: "Konfirmasi Kata Sandi",
+        btnRegister: "Daftar & Masuk",
+        logoutBtn: "Keluar / Logout",
+        errEmptyLogin: "Mohon isi email/username dan kata sandi.",
+        errInvalidLogin: "Email/username atau kata sandi salah.",
+        errEmptyReg: "Mohon lengkapi semua kolom pendaftaran.",
+        errInvalidEmail: "Format email tidak valid.",
+        errEmailTaken: "Email ini sudah terdaftar. Coba masuk saja.",
+        errRegFailed: "Pendaftaran gagal. Coba email atau username lain.",
+        errInvalidUsername: "Username hanya boleh huruf kecil, angka, titik, atau garis bawah (3-30 karakter).",
+        toastCheckEmail: "Cek email kamu untuk mengonfirmasi akun, lalu masuk.",
+        errShortPw: "Kata sandi minimal 6 karakter.",
+        errMismatchPw: "Konfirmasi kata sandi tidak cocok.",
+        forgotTitle: "Reset Kata Sandi",
+        forgotDesc: "Masukkan email yang terdaftar. Kami akan mengirimkan tautan untuk mengatur ulang kata sandimu.",
+        forgotSend: "Kirim Tautan Reset",
+        toastLoginOk: name => `Selamat datang kembali, ${name}!`,
+        toastRegOk: name => `Akun berhasil dibuat! Selamat datang, ${name}!`,
+        toastLogout: "Kamu berhasil keluar dari akun.",
+        toastResetSent: email => `Tautan reset kata sandi dikirim ke ${email}!`
+      },
+      en: {
+        locale: "en-US",
+        tagline: "SAVING BUDDY ✦",
+        nav: { home: "Home", wallets: "Wallets", activity: "Activity", budget: "Budget", splitbill: "Split Bill", profile: "Profile" },
+        greeting: name => `Hello, ${name}! 👋`,
+        homeTitle: "Your Financial Overview",
+        totalBalance: "Total Balance",
+        balanceDesc: "Combined balance across active wallets",
+        monthIncome: "↙ Income this month",
+        monthExpense: "↗ Expense this month",
+        btnIncome: "＋ Income",
+        btnExpense: "＋ Expense",
+        btnTransfer: "⇄ Transfer",
+        cashflow: "Monthly Cashflow ✦",
+        recentTx: "Recent Transactions",
+        seeAll: "See all →",
+        walletsTitle: "My Wallets",
+        walletsSub: "Manage bank accounts, e-wallets, and cash with custom logos.",
+        addWallet: "＋ Add Wallet",
+        edit: "Edit",
+        delete: "Delete",
+        save: "Save",
+        cancel: "Cancel",
+        activityTitle: "Transaction Activity",
+        copyCsv: "Copy CSV",
+        filterSearch: "Search transactions",
+        filterSearchPh: "Notes, category, wallet...",
+        filterType: "Transaction type",
+        filterCat: "Category",
+        filterWallet: "Wallet",
+        filterFrom: "From date",
+        filterTo: "To date",
+        resetFilter: "Reset Filters",
+        allTypes: "All types",
+        allCats: "All categories",
+        allWallets: "All wallets",
+        typeIncome: "Income",
+        typeExpense: "Expense",
+        typeTransfer: "Transfer",
+        filteredIncome: "↙ Total Income (Filtered)",
+        filteredExpense: "↗ Total Expense (Filtered)",
+        activityChart: "Filtered Chart Summary ✦",
+        activityChartSub: "Automatically updates with active filters",
+        chartBar: "Bar Chart",
+        chartBlock: "Stacked Bar",
+        chartPie: "Pie Chart",
+        noTx: "No transactions match your filters.",
+        budgetTitle: m => `Budget for ${m}`,
+        budgetSub: "Track your monthly spending limits by category.",
+        addBudget: "＋ Add Budget",
+        budgetTotal: "Total Budget",
+        budgetSpent: "Spent",
+        budgetLeft: "Remaining",
+        noBudget: "No budgets set for this month yet.",
+        usedPct: p => `${p}% used`,
+        overBudget: "Over budget!",
+        splitTitle: "Split Bill",
+        splitSub: "Split bills with friends, add tax/service, and track installments.",
+        newBill: "＋ New Bill",
+        noBills: "No split bills yet. Click New Bill to get started!",
+        modeEqual: "Split Equally",
+        modeItem: "By Item",
+        modeManual: "Manual",
+        friendsTitle: "Friends",
+        addFriendPh: "Add friend name...",
+        addFriendBtn: "＋ Add",
+        itemsTitle: "Ordered Items",
+        itemNamePh: "Food / item name",
+        itemPricePh: "Price",
+        itemQtyPh: "Qty",
+        addItemBtn: "＋ Item",
+        taxLabel: "Tax",
+        serviceLabel: "Service Fee",
+        typePct: "Percent (%)",
+        typeAmt: "Fixed",
+        subtotal: "Items Subtotal",
+        grandTotal: "Final Bill Total",
+        breakdownTitle: "Breakdown & Payment Status",
+        copySummary: "Copy Summary",
+        deleteBill: "Delete Bill",
+        statusUnpaid: "⏳ Unpaid",
+        statusPartial: p => `🌓 Partial (${p}%)`,
+        statusPaid: "✓ Paid",
+        paidLabel: "Paid",
+        remainLabel: "Left",
+        btnInstallment: "＋ Partial",
+        btnMarkPaid: "✓ Mark Paid",
+        btnResetPay: "Reset",
+        collectedLabel: "Collected",
+        settledCount: (a, b) => `${a}/${b} paid`,
+        manualMatch: "✓ Total matches!",
+        manualShort: diff => `⚠ Short by ${diff}`,
+        manualOver: diff => `⚠ Over by ${diff}`,
+        selectFriendsHint: "Tap friends who shared this item:",
+        profileTitle: "Profile & Settings",
+        userInfo: "User Information",
+        editProfile: "Edit Profile",
+        preferences: "Preferences",
+        prefCurrency: "Primary currency",
+        prefUsd: "1 USD to IDR rate",
+        prefEur: "1 EUR to IDR rate",
+        prefPrivacy: "Balance visibility",
+        showBalance: "Show balance",
+        hideBalance: "Hide balance",
+        prefNote: "Rates can be adjusted manually and apply immediately across the app.",
+        dataMgmt: "Data Management",
+        dataMgmtDesc: "Download a full backup of wallets, transactions, budgets, split bills & profile.",
+        exportJson: "Export JSON",
+        exportCsv: "Export CSV",
+        manageCat: "Manage Categories",
+        manageCatDesc: "Categories are separated into Income and Expense for cleaner tracking.",
+        newCatLabel: "New category name",
+        newCatPh: "e.g. Coffee, Side Project...",
+        addCatBtn: "Add category",
+        txDetail: "Transaction Details",
+        txAddTitle: t => `Add ${t}`,
+        txEditTitle: "Edit Transaction",
+        fieldAmount: "Amount",
+        fieldCurrency: "Currency",
+        fieldDate: "Date",
+        fieldWallet: "Wallet",
+        fieldFromWallet: "From Wallet",
+        fieldToWallet: "To Wallet",
+        fieldCategory: "Category",
+        fieldNote: "Note",
+        walletAddTitle: "Add New Wallet",
+        walletEditTitle: "Edit Wallet",
+        walletName: "Wallet Name",
+        walletBalance: "Initial Balance",
+        walletLogo: "Wallet Logo (Optional)",
+        removeLogo: "Remove Logo",
+        budgetAddTitle: "Add New Budget",
+        budgetEditTitle: "Edit Budget",
+        budgetLimit: "Limit Amount",
+        budgetMonth: "Month",
+        editProfileTitle: "Edit User Profile",
+        fieldAvatar: "Profile Photo (Optional)",
+        removeAvatar: "Remove Photo",
+        fieldBio: "Short Bio",
+        billModalTitle: "Create New Split Bill",
+        billName: "Bill Name",
+        billFriends: "Friends (comma separated)",
+        billMode: "Split Mode",
+        instModalTitle: name => `Installments — ${name}`,
+        instAmount: "Payment Amount",
+        instFillRemain: "Fill Remaining",
+        instNote: "Note (e.g. Bank Transfer DP)",
+        instAddBtn: "Record Payment",
+        instHistory: "Payment History",
+        instEmpty: "No installment records yet.",
+        toastCopyCsv: "Filtered transactions copied as CSV!",
+        toastCopySummary: "Split bill summary copied to clipboard!",
+        toastSaved: "Changes saved!",
+        toastDeleted: "Item deleted!",
+        toastExportJson: "Full backup downloaded (JSON)!",
+        toastExportCsv: "Full report downloaded (CSV)!",
+        authSubtitle: "Track personal finances & split bills effortlessly ✨",
+        tabLogin: "Login",
+        tabRegister: "Register",
+        loginId: "Email or Username",
+        loginPw: "Password",
+        rememberMe: "Remember me",
+        forgotPw: "Forgot password?",
+        btnLogin: "Sign In",
+        authOr: "or",
+        demoLogin: "Sign In with Demo Account",
+        regName: "Full Name",
+        regUser: "Username",
+        regEmail: "Email",
+        regPw: "Password",
+        regConfirm: "Confirm Password",
+        btnRegister: "Create Account & Sign In",
+        logoutBtn: "Logout",
+        errEmptyLogin: "Please enter your email/username and password.",
+        errInvalidLogin: "Incorrect email/username or password.",
+        errEmptyReg: "Please fill in all registration fields.",
+        errInvalidEmail: "Please enter a valid email address.",
+        errEmailTaken: "This email is already registered. Try signing in.",
+        errRegFailed: "Registration failed. Try another email or username.",
+        errInvalidUsername: "Username may only contain lowercase letters, numbers, dots, or underscores (3-30 characters).",
+        toastCheckEmail: "Check your email to confirm your account, then sign in.",
+        errShortPw: "Password must be at least 6 characters.",
+        errMismatchPw: "Password confirmation does not match.",
+        forgotTitle: "Reset Password",
+        forgotDesc: "Enter your registered email address and we'll send you a reset link.",
+        forgotSend: "Send Reset Link",
+        toastLoginOk: name => `Welcome back, ${name}!`,
+        toastRegOk: name => `Account created! Welcome, ${name}!`,
+        toastLogout: "You have been logged out.",
+        toastResetSent: email => `Password reset link sent to ${email}!`
+      },
+      de: {
+        locale: "de-DE",
+        tagline: "SPARFREUND ✦",
+        nav: { home: "Startseite", wallets: "Geldbörsen", activity: "Aktivitäten", budget: "Budget", splitbill: "Teilen", profile: "Profil" },
+        greeting: name => `Hallo, ${name}! 👋`,
+        homeTitle: "Deine Finanzübersicht",
+        totalBalance: "Gesamtsaldo",
+        balanceDesc: "Gesamtbetrag aller aktiven Geldbörsen",
+        monthIncome: "↙ Einnahmen diesen Monat",
+        monthExpense: "↗ Ausgaben diesen Monat",
+        btnIncome: "＋ Einnahme",
+        btnExpense: "＋ Ausgabe",
+        btnTransfer: "⇄ Überweisung",
+        cashflow: "Monatlicher Cashflow ✦",
+        recentTx: "Letzte Transaktionen",
+        seeAll: "Alle ansehen →",
+        walletsTitle: "Meine Geldbörsen",
+        walletsSub: "Verwalte Konten, E-Wallets und Bargeld mit eigenen Logos.",
+        addWallet: "＋ Geldbörse",
+        edit: "Bearbeiten",
+        delete: "Löschen",
+        save: "Speichern",
+        cancel: "Abbrechen",
+        activityTitle: "Transaktionsverlauf",
+        copyCsv: "CSV kopieren",
+        filterSearch: "Suchen",
+        filterSearchPh: "Notizen, Kategorie, Geldbörse...",
+        filterType: "Typ",
+        filterCat: "Kategorie",
+        filterWallet: "Geldbörse",
+        filterFrom: "Von Datum",
+        filterTo: "Bis Datum",
+        resetFilter: "Zurücksetzen",
+        allTypes: "Alle Typen",
+        allCats: "Alle Kategorien",
+        allWallets: "Alle Geldbörsen",
+        typeIncome: "Einnahme",
+        typeExpense: "Ausgabe",
+        typeTransfer: "Überweisung",
+        filteredIncome: "↙ Einnahmen (Gefiltert)",
+        filteredExpense: "↗ Ausgaben (Gefiltert)",
+        activityChart: "Gefilterte Grafik ✦",
+        activityChartSub: "Passt sich automatisch an die Filter an",
+        chartBar: "Balkendiagramm",
+        chartBlock: "Stapelbalken",
+        chartPie: "Kreisdiagramm",
+        noTx: "Keine Transaktionen für diesen Filter gefunden.",
+        budgetTitle: m => `Budget für ${m}`,
+        budgetSub: "Behalte deine monatlichen Ausgabenlimits im Blick.",
+        addBudget: "＋ Budget",
+        budgetTotal: "Gesamtbudget",
+        budgetSpent: "Ausgegeben",
+        budgetLeft: "Verbleibend",
+        noBudget: "Noch kein Budget für diesen Monat festgelegt.",
+        usedPct: p => `${p}% genutzt`,
+        overBudget: "Limit überschritten!",
+        splitTitle: "Rechnung Teilen",
+        splitSub: "Teile Rechnungen, Steuern/Gebühren & verfolige Teilzahlungen.",
+        newBill: "＋ Neue Rechnung",
+        noBills: "Noch keine geteilten Rechnungen vorhanden.",
+        modeEqual: "Gleichmäßig",
+        modeItem: "Nach Artikel",
+        modeManual: "Manuell",
+        friendsTitle: "Freunde",
+        addFriendPh: "Name hinzufügen...",
+        addFriendBtn: "＋ Hinzufügen",
+        itemsTitle: "Bestellte Artikel",
+        itemNamePh: "Essen / Artikel",
+        itemPricePh: "Preis",
+        itemQtyPh: "Menge",
+        addItemBtn: "＋ Artikel",
+        taxLabel: "Steuer",
+        serviceLabel: "Servicegebühr",
+        typePct: "Prozent (%)",
+        typeAmt: "Festbetrag",
+        subtotal: "Zwischensumme",
+        grandTotal: "Endbetrag",
+        breakdownTitle: "Aufteilung & Zahlungsstatus",
+        copySummary: "Übersicht kopieren",
+        deleteBill: "Rechnung löschen",
+        statusUnpaid: "⏳ Offen",
+        statusPartial: p => `🌓 Teilweise (${p}%)`,
+        statusPaid: "✓ Bezahlt",
+        paidLabel: "Bezahlt",
+        remainLabel: "Offen",
+        btnInstallment: "＋ Rate",
+        btnMarkPaid: "✓ Bezahlt",
+        btnResetPay: "Reset",
+        collectedLabel: "Eingesammelt",
+        settledCount: (a, b) => `${a}/${b} bezahlt`,
+        manualMatch: "✓ Betrag stimmt überein!",
+        manualShort: diff => `⚠ Es fehlen ${diff}`,
+        manualOver: diff => `⚠ Überschuss ${diff}`,
+        selectFriendsHint: "Freunde für diesen Artikel auswählen:",
+        profileTitle: "Profil & Einstellungen",
+        userInfo: "Benutzerinformationen",
+        editProfile: "Profil bearbeiten",
+        preferences: "Einstellungen",
+        prefCurrency: "Hauptwährung",
+        prefUsd: "Kurs 1 USD in IDR",
+        prefEur: "Kurs 1 EUR in IDR",
+        prefPrivacy: "Saldo-Anzeige",
+        showBalance: "Saldo anzeigen",
+        hideBalance: "Saldo ausblenden",
+        prefNote: "Wechselkurse können manuell angepasst werden und gelten sofort überall.",
+        dataMgmt: "Datenverwaltung",
+        dataMgmtDesc: "Lade ein vollständiges Backup aller Daten herunter.",
+        exportJson: "Export JSON",
+        exportCsv: "Export CSV",
+        manageCat: "Kategorien verwalten",
+        manageCatDesc: "Kategorien sind übersichtlich nach Einnahmen und Ausgaben getrennt.",
+        newCatLabel: "Neuer Kategoriename",
+        newCatPh: "z.B. Kaffee, Nebenprojekt...",
+        addCatBtn: "Hinzufügen",
+        txDetail: "Transaktionsdetails",
+        txAddTitle: t => `${t} hinzufügen`,
+        txEditTitle: "Transaktion bearbeiten",
+        fieldAmount: "Betrag",
+        fieldCurrency: "Währung",
+        fieldDate: "Datum",
+        fieldWallet: "Geldbörse",
+        fieldFromWallet: "Von Geldbörse",
+        fieldToWallet: "An Geldbörse",
+        fieldCategory: "Kategorie",
+        fieldNote: "Notiz",
+        walletAddTitle: "Neue Geldbörse",
+        walletEditTitle: "Geldbörse bearbeiten",
+        walletName: "Name",
+        walletBalance: "Anfangssaldo",
+        walletLogo: "Logo (Optional)",
+        removeLogo: "Logo entfernen",
+        budgetAddTitle: "Neues Budget",
+        budgetEditTitle: "Budget bearbeiten",
+        budgetLimit: "Limit",
+        budgetMonth: "Monat",
+        editProfileTitle: "Profil bearbeiten",
+        fieldAvatar: "Profilbild (Optional)",
+        removeAvatar: "Foto entfernen",
+        fieldBio: "Kurze Bio",
+        billModalTitle: "Neue geteilte Rechnung",
+        billName: "Rechnungsname",
+        billFriends: "Freunde (durch Komma getrennt)",
+        billMode: "Aufteilungsmodus",
+        instModalTitle: name => `Teilzahlungen — ${name}`,
+        instAmount: "Zahlungsbetrag",
+        instFillRemain: "Restbetrag füllen",
+        instNote: "Notiz (z.B. Überweisung)",
+        instAddBtn: "Zahlung speichern",
+        instHistory: "Zahlungsverlauf",
+        instEmpty: "Noch keine Teilzahlungen erfasst.",
+        toastCopyCsv: "Transaktionen als CSV kopiert!",
+        toastCopySummary: "Rechnungsübersicht kopiert!",
+        toastSaved: "Änderungen gespeichert!",
+        toastDeleted: "Erfolgreich gelöscht!",
+        toastExportJson: "Vollständiges Backup heruntergeladen (JSON)!",
+        toastExportCsv: "Vollständiger Bericht heruntergeladen (CSV)!",
+        authSubtitle: "Finanzen & geteilte Rechnungen entspannt im Blick ✨",
+        tabLogin: "Anmelden",
+        tabRegister: "Registrieren",
+        loginId: "E-Mail oder Benutzername",
+        loginPw: "Passwort",
+        rememberMe: "Angemeldet bleiben",
+        forgotPw: "Passwort vergessen?",
+        btnLogin: "Anmelden",
+        authOr: "oder",
+        demoLogin: "Mit Demo-Konto anmelden",
+        regName: "Vollständiger Name",
+        regUser: "Benutzername",
+        regEmail: "E-Mail",
+        regPw: "Passwort",
+        regConfirm: "Passwort bestätigen",
+        btnRegister: "Registrieren & Starten",
+        logoutBtn: "Abmelden / Logout",
+        errEmptyLogin: "Bitte E-Mail/Benutzername und Passwort eingeben.",
+        errInvalidLogin: "E-Mail/Benutzername oder Passwort falsch.",
+        errEmptyReg: "Bitte fülle alle Registrierungsfelder aus.",
+        errInvalidEmail: "Bitte eine gültige E-Mail-Adresse eingeben.",
+        errEmailTaken: "Diese E-Mail ist bereits registriert. Versuche dich anzumelden.",
+        errRegFailed: "Registrierung fehlgeschlagen. Versuche eine andere E-Mail oder einen anderen Benutzernamen.",
+        errInvalidUsername: "Benutzername darf nur Kleinbuchstaben, Zahlen, Punkte oder Unterstriche enthalten (3-30 Zeichen).",
+        toastCheckEmail: "Prüfe deine E-Mails, um dein Konto zu bestätigen, und melde dich dann an.",
+        errShortPw: "Das Passwort muss mindestens 6 Zeichen lang sein.",
+        errMismatchPw: "Die Passwörter stimmen nicht überein.",
+        forgotTitle: "Passwort zurücksetzen",
+        forgotDesc: "Gib deine registrierte E-Mail-Adresse ein, um einen Reset-Link zu erhalten.",
+        forgotSend: "Reset-Link senden",
+        toastLoginOk: name => `Willkommen zurück, ${name}!`,
+        toastRegOk: name => `Konto erstellt! Willkommen, ${name}!`,
+        toastLogout: "Du wurdest erfolgreich abgemeldet.",
+        toastResetSent: email => `Reset-Link wurde an ${email} gesendet!`
+      }
+    };
+
+    const THIS_MONTH = "2026-11";
+
+    // Default Initial State
+    const getDefaultState = () => ({
+      auth: {
+        isLoggedIn: false,
+        rememberMe: true,
+        registeredUsers: []
+      },
+      profile: {
+        name: "Agnes Widya",
+        username: "@a.nes.wid",
+        email: "agnes@celenganaku.id",
+        bio: "Pelan-pelan menabung buat masa depan & jalan-jalan ✨",
+        avatar: ""
+      },
+      preferences: {
+        currency: "IDR",
+        lang: "id",
+        usdRate: 16000,
+        eurRate: 17500,
+        hiddenBalance: false
+      },
+      categories: {
+        income: ["Gaji", "Freelance", "Bonus", "Investasi", "Hadiah", "Lainnya"],
+        expense: ["Makanan", "Transport", "Belanja", "Tagihan", "Hiburan", "Kesehatan", "Pendidikan", "Lainnya"]
+      },
+      wallets: [
+        { id: "w1", name: "BCA Utama", balance: 12450000, currency: "IDR", color: "#b8d9fb", icon: "🏦", logo: "" },
+        { id: "w2", name: "GoPay", balance: 850000, currency: "IDR", color: "#c5ebce", icon: "📱", logo: "" },
+        { id: "w3", name: "Dompet Tunai", balance: 420000, currency: "IDR", color: "#ffe18c", icon: "💵", logo: "" },
+        { id: "w4", name: "Tabungan USD", balance: 250, currency: "USD", color: "#e9d8f8", icon: "🌍", logo: "" }
+      ],
+      transactions: [
+        { id: "t1", type: "income", amount: 8500000, currency: "IDR", category: "Gaji", walletId: "w1", date: "2026-11-01", note: "Gaji bulanan November" },
+        { id: "t2", type: "expense", amount: 185000, currency: "IDR", category: "Makanan", walletId: "w2", date: "2026-11-11", note: "Makan siang & kopi susu" },
+        { id: "t3", type: "expense", amount: 95000, currency: "IDR", category: "Transport", walletId: "w2", date: "2026-11-14", note: "Isi bensin & tol" },
+        { id: "t4", type: "income", amount: 3500000, currency: "IDR", category: "Freelance", walletId: "w1", date: "2026-11-17", note: "Proyek desain UI/UX" },
+        { id: "t5", type: "transfer", amount: 500000, currency: "IDR", category: "Transfer", walletId: "w1", toWalletId: "w2", date: "2026-11-18", note: "Top up saldo GoPay" },
+        { id: "t6", type: "expense", amount: 320000, currency: "IDR", category: "Belanja", walletId: "w1", date: "2026-11-19", note: "Belanja kebutuhan bulanan" },
+        { id: "t7", type: "expense", amount: 45000, currency: "IDR", category: "Makanan", walletId: "w3", date: "2026-11-20", note: "Jajan sore & es teh" }
+      ],
+      budgets: [
+        { id: "b1", category: "Makanan", limit: 1500000, currency: "IDR", month: "2026-11" },
+        { id: "b2", category: "Transport", limit: 600000, currency: "IDR", month: "2026-11" },
+        { id: "b3", category: "Belanja", limit: 1000000, currency: "IDR", month: "2026-11" }
+      ],
+      splitBills: [
+        {
+          id: "sb1",
+          title: "Makan Malam & Kopi",
+          date: "2026-11-19",
+          currency: "IDR",
+          mode: "item",
+          taxType: "percent",
+          taxValue: 10,
+          serviceType: "amount",
+          serviceValue: 15000,
+          friends: [
+            { id: "f1", name: "Agnes", manualAmount: 0, installments: [{ id: "in1", amount: 115000, date: "2026-11-19", note: "Bayar di kasir" }] },
+            { id: "f2", name: "Rani", manualAmount: 0, installments: [{ id: "in2", amount: 50000, date: "2026-11-19", note: "DP Transfer BCA" }] },
+            { id: "f3", name: "Bima", manualAmount: 0, installments: [] }
+          ],
+          items: [
+            { id: "it1", name: "Ramen Shoyu", price: 65000, qty: 2, assignedTo: ["f1", "f2"] },
+            { id: "it2", name: "Chicken Katsu Curry", price: 72000, qty: 1, assignedTo: ["f3"] },
+            { id: "it3", name: "Gyoza Sharing", price: 48000, qty: 1, assignedTo: ["f1", "f2", "f3"] }
+          ]
+        },
+        {
+          id: "sb2",
+          title: "Patungan Kado & Kue",
+          date: "2026-11-15",
+          currency: "IDR",
+          mode: "equal",
+          taxType: "percent",
+          taxValue: 0,
+          serviceType: "amount",
+          serviceValue: 20000,
+          friends: [
+            { id: "f4", name: "Agnes", manualAmount: 0, installments: [{ id: "in3", amount: 105000, date: "2026-11-15", note: "Lunas" }] },
+            { id: "f5", name: "Dina", manualAmount: 0, installments: [{ id: "in4", amount: 105000, date: "2026-11-16", note: "Transfer GoPay" }] },
+            { id: "f6", name: "Fajar", manualAmount: 0, installments: [] },
+            { id: "f7", name: "Sinta", manualAmount: 0, installments: [] }
+          ],
+          items: [
+            { id: "it4", name: "Kue Tart Cokelat", price: 240000, qty: 1, assignedTo: [] },
+            { id: "it5", name: "Kado & Kartu Ucapan", price: 160000, qty: 1, assignedTo: [] }
+          ]
+        },
+        {
+          id: "sb3",
+          title: "Sewa Lapangan & Minum",
+          date: "2026-11-12",
+          currency: "IDR",
+          mode: "manual",
+          taxType: "percent",
+          taxValue: 0,
+          serviceType: "amount",
+          serviceValue: 0,
+          friends: [
+            { id: "f8", name: "Agnes", manualAmount: 90000, installments: [{ id: "in5", amount: 90000, date: "2026-11-12", note: "Lunas" }] },
+            { id: "f9", name: "Kevin", manualAmount: 85000, installments: [{ id: "in6", amount: 85000, date: "2026-11-12", note: "Cash" }] },
+            { id: "f10", name: "Tio", manualAmount: 75000, installments: [{ id: "in7", amount: 40000, date: "2026-11-13", note: "Cicil dulu" }] }
+          ],
+          items: [
+            { id: "it6", name: "Sewa Lapangan 2 Jam", price: 200000, qty: 1, assignedTo: [] },
+            { id: "it7", name: "Air Mineral & Isotonik", price: 50000, qty: 1, assignedTo: [] }
+          ]
+        }
+      ]
+    });
+
+    // Load or Initialize State
+    let state;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      state = saved ? JSON.parse(saved) : getDefaultState();
+      if (!state.auth) state.auth = { isLoggedIn: false, rememberMe: true, registeredUsers: [] };
+      if (!state.splitBills) state.splitBills = getDefaultState().splitBills;
+    } catch (e) {
+      state = getDefaultState();
+    }
+
+    let sessionLoggedIn = Boolean(state.auth.isLoggedIn && state.auth.rememberMe);
+    let authTab = "login";
+    let currentPage = "home";
+    let selectedCategoryTab = "expense";
+    let selectedBudgetMonth = THIS_MONTH;
+    let activeBillId = state.splitBills[0]?.id || null;
+    let activityChartType = "bar";
+    let financeChartInst = null;
+    let activityChartInst = null;
+
+    const saveState = () => {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    };
+
+    const T = () => I18N[state.preferences.lang] || I18N.id;
+
+    const esc = s => String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+    const uid = p => p + "_" + Math.random().toString(36).slice(2, 9);
+
+    // Currency Conversions & Formatting
+    const toIDR = (amt, cur) => {
+      const n = Number(amt) || 0;
+      if (cur === "USD") return n * (Number(state.preferences.usdRate) || 16000);
+      if (cur === "EUR") return n * (Number(state.preferences.eurRate) || 17500);
+      return n;
+    };
+
+    const fromIDR = (idrAmt, targetCur) => {
+      const n = Number(idrAmt) || 0;
+      if (targetCur === "USD") return n / (Number(state.preferences.usdRate) || 16000);
+      if (targetCur === "EUR") return n / (Number(state.preferences.eurRate) || 17500);
+      return n;
+    };
+
+    const convert = (amt, fromCur, toCur = state.preferences.currency) => {
+      if (fromCur === toCur) return Number(amt) || 0;
+      return fromIDR(toIDR(amt, fromCur), toCur);
+    };
+
+    const fmtMoney = (amt, cur = state.preferences.currency, maskable = false) => {
+      if (maskable && state.preferences.hiddenBalance) return "••••••";
+      const val = Number(amt) || 0;
+      const loc = T().locale;
+      try {
+        return new Intl.NumberFormat(loc, {
+          style: "currency",
+          currency: cur,
+          maximumFractionDigits: cur === "IDR" ? 0 : 2
+        }).format(val);
+      } catch {
+        return `${cur} ${val.toLocaleString(loc)}`;
+      }
+    };
+
+    // Format Date WITH Day Name (e.g. "Kamis, 19 Nov 2026")
+    const fmtDate = (iso, longMonth = false) => {
+      if (!iso) return "-";
+      const parts = iso.split("-").map(Number);
+      if (parts.length !== 3) return iso;
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (isNaN(d)) return iso;
+      return new Intl.DateTimeFormat(T().locale, {
+        weekday: "long",
+        day: "numeric",
+        month: longMonth ? "long" : "short",
+        year: "numeric"
+      }).format(d);
+    };
+
+    const fmtMonthLabel = ym => {
+      if (!ym) return "";
+      const [y, m] = ym.split("-").map(Number);
+      const d = new Date(y, (m || 1) - 1, 1);
+      return new Intl.DateTimeFormat(T().locale, { month: "long", year: "numeric" }).format(d);
+    };
+
+    // Toast & Clipboard (iFrame safe)
+    const showToast = msg => {
+      const box = $("toast-container");
+      const item = document.createElement("div");
+      item.className = "toast-item";
+      item.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 shrink-0" style="color:#8466bd;"></i><span>${esc(msg)}</span>`;
+      box.appendChild(item);
+      lucide.createIcons({ nodes: [item] });
+      setTimeout(() => item.remove(), 3000);
+    };
+
+    const copyTextSafe = (text, toastMsg) => {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast(toastMsg);
+      } catch {
+        showToast(toastMsg);
+      }
+    };
+
+    // Modal Helpers
+    const openModal = (title, html) => {
+      $("modal-title").textContent = title;
+      $("modal-body").innerHTML = html;
+      $("app-modal").hidden = false;
+      lucide.createIcons({ nodes: [$("app-modal")] });
+    };
+
+    const closeModal = () => {
+      $("app-modal").hidden = true;
+      $("modal-body").innerHTML = "";
+    };
+
+    $("modal-close").addEventListener("click", closeModal);
+    $("app-modal").addEventListener("click", e => {
+      if (e.target === $("app-modal")) closeModal();
+    });
+
+    // =====================================================
+    // NAVIGATION (Beranda, Dompet, Aktivitas, Budget, Patungan, Profil)
+    // =====================================================
+    const NAV_ITEMS = [
+      { id: "home", icon: "home" },
+      { id: "wallets", icon: "wallet" },
+      { id: "activity", icon: "arrow-left-right" },
+      { id: "budget", icon: "pie-chart" },
+      { id: "splitbill", icon: "users" },
+      { id: "profile", icon: "user" }
+    ];
+
+    const renderNav = () => {
+      const t = T();
+      const html = NAV_ITEMS.map(item => `
+        <button type="button" class="nav-item ${currentPage === item.id ? "active" : ""}" data-page="${item.id}">
+          <i data-lucide="${item.icon}"></i>
+          <span>${esc(t.nav[item.id])}</span>
+        </button>
+      `).join("");
+      $("desktop-nav").innerHTML = html;
+      $("bottom-nav").innerHTML = html;
+      document.querySelectorAll("[data-page]").forEach(btn => {
+        btn.onclick = () => switchPage(btn.dataset.page);
+      });
+      lucide.createIcons({ nodes: [$("desktop-nav"), $("bottom-nav")] });
+    };
+
+    const switchPage = page => {
+      currentPage = page;
+      document.querySelectorAll(".page").forEach(sec => {
+        sec.hidden = sec.id !== page;
+      });
+      renderNav();
+      if (page === "home") renderHome();
+      if (page === "wallets") renderWallets();
+      if (page === "activity") renderActivity();
+      if (page === "budget") renderBudgets();
+      if (page === "splitbill") renderSplitBills();
+      if (page === "profile") renderProfile();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    // =====================================================
+    // APPLY TRANSLATIONS
+    // =====================================================
+    const XL_DICT = {
+  "id": {
+    "walletType": "Tipe dompet",
+    "typeCash": "Tunai",
+    "typeBank": "Bank",
+    "typeDigital": "Digital",
+    "pasteUrl": "Tempel URL",
+    "uploadFile": "Upload file (maks 100 KB)",
+    "fileTooBig": "File terlalu besar (maks 100 KB). Pakai pilihan Tempel URL dari GitHub.",
+    "errView": "Error tampilan: ",
+    "errDelWallet": "Gagal menghapus dompet: ",
+    "errSaveWallet": "Gagal menyimpan dompet: ",
+    "errAdj": "Gagal mencatat koreksi saldo: ",
+    "errCreateWallet": "Gagal membuat dompet: ",
+    "errAmount": "Jumlah harus lebih dari 0",
+    "errPickWallet": "Pilih dompet dulu",
+    "errPickTo": "Pilih dompet tujuan yang berbeda",
+    "errCatNotFound": "Kategori tidak ditemukan",
+    "errSaveTx": "Gagal menyimpan transaksi: ",
+    "errDelTx": "Gagal menghapus transaksi: ",
+    "errDelBudget": "Gagal menghapus budget: ",
+    "errBudgetLimit": "Batas budget harus lebih dari 0",
+    "errBudgetDup": "Budget untuk kategori ini di bulan tersebut sudah ada",
+    "errSaveBudget": "Gagal menyimpan budget: ",
+    "errSaveBill": "Gagal menyimpan tagihan: ",
+    "errDelBill": "Gagal menghapus tagihan: ",
+    "errDelCat": "Gagal menghapus kategori: ",
+    "errSaveProfile": "Gagal menyimpan profil: ",
+    "errAddCat": "Gagal menambah kategori: ",
+    "errLoad": "Gagal memuat data: ",
+    "errLoadBill": "Gagal memuat patungan: "
+  },
+  "en": {
+    "walletType": "Wallet type",
+    "typeCash": "Cash",
+    "typeBank": "Bank",
+    "typeDigital": "Digital",
+    "pasteUrl": "Paste URL",
+    "uploadFile": "Upload file (max 100 KB)",
+    "fileTooBig": "File is too large (max 100 KB). Use Paste URL with a GitHub link instead.",
+    "errView": "Display error: ",
+    "errDelWallet": "Failed to delete wallet: ",
+    "errSaveWallet": "Failed to save wallet: ",
+    "errAdj": "Failed to record balance adjustment: ",
+    "errCreateWallet": "Failed to create wallet: ",
+    "errAmount": "Amount must be greater than 0",
+    "errPickWallet": "Pick a wallet first",
+    "errPickTo": "Pick a different destination wallet",
+    "errCatNotFound": "Category not found",
+    "errSaveTx": "Failed to save transaction: ",
+    "errDelTx": "Failed to delete transaction: ",
+    "errDelBudget": "Failed to delete budget: ",
+    "errBudgetLimit": "Budget limit must be greater than 0",
+    "errBudgetDup": "A budget for this category already exists for that month",
+    "errSaveBudget": "Failed to save budget: ",
+    "errSaveBill": "Failed to save bill: ",
+    "errDelBill": "Failed to delete bill: ",
+    "errDelCat": "Failed to delete category: ",
+    "errSaveProfile": "Failed to save profile: ",
+    "errAddCat": "Failed to add category: ",
+    "errLoad": "Failed to load data: ",
+    "errLoadBill": "Failed to load split bills: "
+  },
+  "de": {
+    "walletType": "Wallet-Typ",
+    "typeCash": "Bar",
+    "typeBank": "Bank",
+    "typeDigital": "Digital",
+    "pasteUrl": "URL einfügen",
+    "uploadFile": "Datei hochladen (max. 100 KB)",
+    "fileTooBig": "Datei ist zu groß (max. 100 KB). Nutze stattdessen „URL einfügen“ mit einem GitHub-Link.",
+    "errView": "Anzeigefehler: ",
+    "errDelWallet": "Wallet konnte nicht gelöscht werden: ",
+    "errSaveWallet": "Wallet konnte nicht gespeichert werden: ",
+    "errAdj": "Saldokorrektur konnte nicht gespeichert werden: ",
+    "errCreateWallet": "Wallet konnte nicht erstellt werden: ",
+    "errAmount": "Betrag muss größer als 0 sein",
+    "errPickWallet": "Wähle zuerst ein Wallet",
+    "errPickTo": "Wähle ein anderes Ziel-Wallet",
+    "errCatNotFound": "Kategorie nicht gefunden",
+    "errSaveTx": "Transaktion konnte nicht gespeichert werden: ",
+    "errDelTx": "Transaktion konnte nicht gelöscht werden: ",
+    "errDelBudget": "Budget konnte nicht gelöscht werden: ",
+    "errBudgetLimit": "Budget-Limit muss größer als 0 sein",
+    "errBudgetDup": "Für diese Kategorie gibt es in diesem Monat bereits ein Budget",
+    "errSaveBudget": "Budget konnte nicht gespeichert werden: ",
+    "errSaveBill": "Rechnung konnte nicht gespeichert werden: ",
+    "errDelBill": "Rechnung konnte nicht gelöscht werden: ",
+    "errDelCat": "Kategorie konnte nicht gelöscht werden: ",
+    "errSaveProfile": "Profil konnte nicht gespeichert werden: ",
+    "errAddCat": "Kategorie konnte nicht hinzugefügt werden: ",
+    "errLoad": "Daten konnten nicht geladen werden: ",
+    "errLoadBill": "Teilungsrechnungen konnten nicht geladen werden: "
+  }
+};
+    const XL = key => (XL_DICT[state.preferences.lang] || XL_DICT.id)[key] ?? XL_DICT.id[key] ?? key;
+
+    const applyTranslations = () => {
+      const t = T();
+      $("badge-tagline").textContent = t.tagline;
+      $("display-currency").value = state.preferences.currency;
+      $("display-lang").value = state.preferences.lang;
+
+      // Home
+      $("home-greeting").textContent = t.greeting(String(state.profile?.name || "").split(" ")[0] || "Teman");
+      $("home-title").textContent = t.homeTitle;
+      $("lbl-total-balance").textContent = t.totalBalance;
+      $("lbl-balance-desc").textContent = t.balanceDesc;
+      $("lbl-month-income").textContent = t.monthIncome;
+      $("lbl-month-expense").textContent = t.monthExpense;
+      $("btn-quick-income").textContent = t.btnIncome;
+      $("btn-quick-expense").textContent = t.btnExpense;
+      $("btn-quick-transfer").textContent = t.btnTransfer;
+      $("lbl-cashflow").textContent = t.cashflow;
+      $("lbl-recent-tx").textContent = t.recentTx;
+      $("btn-see-all").textContent = t.seeAll;
+
+      // Wallets
+      $("wallets-title").textContent = t.walletsTitle;
+      $("wallets-subtitle").textContent = t.walletsSub;
+      $("btn-add-wallet").textContent = t.addWallet;
+
+      // Activity
+      $("activity-title").textContent = t.activityTitle;
+      $("copy-csv").textContent = t.copyCsv;
+      $("lbl-filter-search").textContent = t.filterSearch;
+      $("search").placeholder = t.filterSearchPh;
+      $("lbl-filter-type").textContent = t.filterType;
+      $("lbl-filter-cat").textContent = t.filterCat;
+      $("lbl-filter-wallet").textContent = t.filterWallet;
+      $("lbl-filter-from").textContent = t.filterFrom;
+      $("lbl-filter-to").textContent = t.filterTo;
+      $("btn-reset-filter").textContent = t.resetFilter;
+      $("lbl-filtered-income").textContent = t.filteredIncome;
+      $("lbl-filtered-expense").textContent = t.filteredExpense;
+      $("lbl-activity-chart").textContent = t.activityChart;
+      $("lbl-activity-chart-sub").textContent = t.activityChartSub;
+
+      // Preserve selections in Activity filters
+      const prevType = $("type-filter").value || "all";
+      $("type-filter").innerHTML = `
+        <option value="all">${esc(t.allTypes)}</option>
+        <option value="income">${esc(t.typeIncome)}</option>
+        <option value="expense">${esc(t.typeExpense)}</option>
+        <option value="transfer">${esc(t.typeTransfer)}</option>
+      `;
+      $("type-filter").value = prevType;
+
+      const prevChart = $("activity-chart-type").value || activityChartType;
+      $("activity-chart-type").innerHTML = `
+        <option value="bar">${esc(t.chartBar)}</option>
+        <option value="block">${esc(t.chartBlock)}</option>
+        <option value="pie">${esc(t.chartPie)}</option>
+      `;
+      $("activity-chart-type").value = prevChart;
+
+      // Budget
+      $("budget-subtitle").textContent = t.budgetSub;
+      $("btn-add-budget").textContent = t.addBudget;
+      $("lbl-budget-total").textContent = t.budgetTotal;
+      $("lbl-budget-spent").textContent = t.budgetSpent;
+      $("lbl-budget-left").textContent = t.budgetLeft;
+
+      // Split Bill
+      $("split-title").textContent = t.splitTitle;
+      $("split-subtitle").textContent = t.splitSub;
+      $("btn-new-bill").textContent = t.newBill;
+
+      // Profile
+      $("profile-title").textContent = t.profileTitle;
+      $("lbl-user-info").textContent = t.userInfo;
+      $("btn-edit-profile").textContent = t.editProfile;
+      $("lbl-preferences").textContent = t.preferences;
+      $("lbl-pref-currency").textContent = t.prefCurrency;
+      $("lbl-pref-usd").textContent = t.prefUsd;
+      $("lbl-pref-eur").textContent = t.prefEur;
+      $("lbl-pref-privacy").textContent = t.prefPrivacy;
+      $("privacy-setting").innerHTML = `
+        <option value="show">${esc(t.showBalance)}</option>
+        <option value="hide">${esc(t.hideBalance)}</option>
+      `;
+      $("privacy-setting").value = state.preferences.hiddenBalance ? "hide" : "show";
+      $("lbl-pref-note").textContent = t.prefNote;
+      $("lbl-data-mgmt").textContent = t.dataMgmt;
+      $("lbl-data-mgmt-desc").textContent = t.dataMgmtDesc;
+      $("lbl-export-json").textContent = t.exportJson;
+      $("lbl-export-csv").textContent = t.exportCsv;
+      $("lbl-manage-cat").textContent = t.manageCat;
+      $("lbl-manage-cat-desc").textContent = t.manageCatDesc;
+      $("income-category-tab").textContent = t.typeIncome;
+      $("expense-category-tab").textContent = t.typeExpense;
+      $("lbl-new-cat").textContent = t.newCatLabel;
+      $("new-category").placeholder = t.newCatPh;
+      $("btn-add-cat").textContent = t.addCatBtn;
+      $("lbl-logout").textContent = t.logoutBtn;
+
+      // Auth Screen
+      $("auth-lang").value = state.preferences.lang;
+      $("auth-subtitle").textContent = t.authSubtitle;
+      $("tab-login").textContent = t.tabLogin;
+      $("tab-register").textContent = t.tabRegister;
+      $("lbl-login-id").textContent = t.loginId;
+      $("lbl-login-pw").textContent = t.loginPw;
+      $("lbl-remember-me").textContent = t.rememberMe;
+      $("btn-forgot-pw").textContent = t.forgotPw;
+      $("btn-login-submit").textContent = t.btnLogin;
+      $("lbl-reg-name").textContent = t.regName;
+      $("lbl-reg-user").textContent = t.regUser;
+      $("lbl-reg-email").textContent = t.regEmail;
+      $("lbl-reg-pw").textContent = t.regPw;
+      $("lbl-reg-confirm").textContent = t.regConfirm;
+      $("btn-reg-submit").textContent = t.btnRegister;
+    };
+
+    // =====================================================
+    // AUTH SCREEN HELPERS
+    // =====================================================
+    const showAuthError = msg => {
+      if (!msg) {
+        $("auth-error").hidden = true;
+        return;
+      }
+      $("auth-error-text").textContent = msg;
+      $("auth-error").hidden = false;
+      lucide.createIcons({ nodes: [$("auth-error")] });
+    };
+
+    const setAuthTab = tab => {
+      authTab = tab;
+      $("tab-login").classList.toggle("active", tab === "login");
+      $("tab-register").classList.toggle("active", tab === "register");
+      $("login-form").hidden = tab !== "login";
+      $("register-form").hidden = tab !== "register";
+      showAuthError("");
+    };
+
+    const updateAuthVisibility = () => {
+      const loggedIn = Boolean(sessionLoggedIn);
+      $("auth-screen").hidden = loggedIn;
+      $("app-main-wrap").hidden = !loggedIn;
+      if (loggedIn) {
+        try {
+          renderAll();
+          switchPage(currentPage || "home");
+        } catch (err) {
+          console.error("Gagal menampilkan halaman utama:", err);
+          showToast(XL("errView") + (err?.message || err));
+        }
+      } else {
+        try {
+          applyTranslations();
+          setAuthTab(authTab);
+          lucide.createIcons();
+        } catch (err) {
+          console.error("Gagal mengisi teks login:", err);
+          showAuthError(XL("errView") + (err?.message || err));
+        }
+      }
+    };
+
+    const completeLogin = (remember, toastMsg) => {
+      sessionLoggedIn = true;
+      state.auth.rememberMe = Boolean(remember);
+      state.auth.isLoggedIn = Boolean(remember);
+      saveState();
+      currentPage = "home";
+      updateAuthVisibility();
+      if (toastMsg) showToast(toastMsg);
+    };
+
+    // =====================================================
+    // 1. HOME RENDERING
+    // =====================================================
+    const walletById = id => state.wallets.find(w => w.id === id);
+
+    const txRowHtml = tx => {
+      const w = walletById(tx.walletId);
+      const wTo = tx.toWalletId ? walletById(tx.toWalletId) : null;
+      const isInc = tx.type === "income";
+      const isExp = tx.type === "expense";
+      const bg = isInc ? "#b8d9fb" : isExp ? "#ffadbc" : "#ffe18c";
+      const sym = isInc ? "↙" : isExp ? "↗" : "⇄";
+      const sign = isInc ? "+" : isExp ? "-" : "";
+      const color = isInc ? "#1e5b9c" : isExp ? "#a6304c" : "#8c6514";
+      const subWallet = tx.type === "transfer" && wTo ? `${w?.name || "-"} → ${wTo.name}` : (w?.name || "-");
+      const convAmt = convert(tx.amount, tx.currency);
+      return `
+        <button type="button" class="tx-row" data-tx-id="${esc(tx.id)}">
+          <span class="tx-icon" style="background:${bg};">${sym}</span>
+          <div class="flex-1 min-w-0">
+            <p class="font-extrabold text-sm sm:text-base truncate">${esc(tx.category)}</p>
+            <p class="muted text-xs font-bold truncate">${esc(tx.note || subWallet)} · ${esc(fmtDate(tx.date))}</p>
+          </div>
+          <div class="tx-amount shrink-0">
+            <p class="font-extrabold text-sm sm:text-base" style="color:${color};">${sign}${esc(fmtMoney(convAmt, state.preferences.currency, true))}</p>
+            <p class="muted text-[11px] font-bold">${esc(subWallet)}</p>
+          </div>
+        </button>
+      `;
+    };
+
+    const bindTxClicks = container => {
+      container.querySelectorAll("[data-tx-id]").forEach(btn => {
+        btn.onclick = () => openTxDetailModal(btn.dataset.txId);
+      });
+    };
+
+    const renderHome = () => {
+      const t = T();
+      const totalIDR = state.wallets.reduce((sum, w) => sum + toIDR(w.balance, w.currency), 0);
+      $("total-balance").textContent = fmtMoney(fromIDR(totalIDR, state.preferences.currency), state.preferences.currency, true);
+      $("privacy-btn").innerHTML = `<i data-lucide="${state.preferences.hiddenBalance ? "eye-off" : "eye"}"></i>`;
+      lucide.createIcons({ nodes: [$("privacy-btn")] });
+
+      const monthTxs = state.transactions.filter(tx => (tx.date || "").startsWith(THIS_MONTH));
+      const incIDR = monthTxs.filter(tx => tx.type === "income").reduce((s, tx) => s + toIDR(tx.amount, tx.currency), 0);
+      const expIDR = monthTxs.filter(tx => tx.type === "expense").reduce((s, tx) => s + toIDR(tx.amount, tx.currency), 0);
+
+      $("income-total").textContent = fmtMoney(fromIDR(incIDR, state.preferences.currency), state.preferences.currency, true);
+      $("expense-total").textContent = fmtMoney(fromIDR(expIDR, state.preferences.currency), state.preferences.currency, true);
+
+      // Recent Transactions
+      const recent = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+      $("recent-list").innerHTML = recent.length
+        ? recent.map(txRowHtml).join("")
+        : `<p class="muted text-sm font-bold py-6 text-center">${esc(t.noTx)}</p>`;
+      bindTxClicks($("recent-list"));
+
+      // Home Cashflow Chart
+      const ctx = $("finance-chart");
+      if (financeChartInst) financeChartInst.destroy();
+      financeChartInst = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: [t.typeIncome, t.typeExpense],
+          datasets: [{
+            data: [
+              fromIDR(incIDR, state.preferences.currency),
+              fromIDR(expIDR, state.preferences.currency)
+            ],
+            backgroundColor: ["#b8d9fb", "#ffadbc"],
+            borderColor: ["#7eb4eb", "#e87a90"],
+            borderWidth: 2,
+            borderRadius: 16,
+            maxBarThickness: 64
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: c => fmtMoney(c.raw, state.preferences.currency)
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#f3e5da" } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    };
+
+    // =====================================================
+    // 2. WALLETS RENDERING & MODAL (WITH LOGO UPLOAD)
+    // =====================================================
+    const renderWallets = () => {
+      const t = T();
+      $("wallet-list").innerHTML = state.wallets.map(w => `
+        <article class="surface bg-white p-5 flex flex-col justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="clay-wallet" style="background:${esc(w.color || "#dfc9f5")};">
+              ${w.logo ? `<img src="${esc(w.logo)}" alt="${esc(w.name)}">` : esc(w.icon || "💳")}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="font-extrabold text-lg truncate">${esc(w.name)}</p>
+              <p class="muted text-xs font-bold">${esc(w.currency)}</p>
+            </div>
+          </div>
+          <div>
+            <p class="font-extrabold text-2xl break-all">${esc(fmtMoney(w.balance, w.currency, true))}</p>
+            ${w.currency !== state.preferences.currency
+              ? `<p class="muted text-xs font-bold mt-0.5">≈ ${esc(fmtMoney(convert(w.balance, w.currency), state.preferences.currency, true))}</p>`
+              : ""}
+          </div>
+          <div class="flex gap-2">
+            <button type="button" class="app-button light-button flex-1 !py-2 text-xs" data-edit-wallet="${esc(w.id)}">${esc(t.edit)}</button>
+            <button type="button" class="app-button !py-2 text-xs" style="background:#ffadbc;color:#48342f;" data-del-wallet="${esc(w.id)}">${esc(t.delete)}</button>
+          </div>
+        </article>
+      `).join("");
+
+      $("wallet-list").querySelectorAll("[data-edit-wallet]").forEach(b => {
+        b.onclick = () => openWalletModal(b.dataset.editWallet);
+      });
+      $("wallet-list").querySelectorAll("[data-del-wallet]").forEach(b => {
+        b.onclick = async () => {
+          if (state.wallets.length <= 1) return;
+          const row = state.wallets.find(w => w.id === b.dataset.delWallet);
+          const { error } = await sb.from("wallets").delete().eq("id", row.dbId);
+          if (error) {
+            showToast(XL("errDelWallet") + error.message);
+            return;
+          }
+          await reloadFromDatabase();
+          renderAll();
+          showToast(t.toastDeleted);
+        };
+      });
+    };
+
+    const openWalletModal = (editId = null) => {
+      const t = T();
+      const w = editId ? walletById(editId) : null;
+      let logoData = w?.logo || "";
+      const colors = ["#b8d9fb", "#c5ebce", "#ffe18c", "#e9d8f8", "#ffc6d3"];
+      openModal(w ? t.walletEditTitle : t.walletAddTitle, `
+        <form id="wallet-form" class="space-y-4">
+          <div>
+            <label class="field-label">${esc(t.walletName)}</label>
+            <input name="name" class="field" value="${esc(w?.name || "")}" required>
+          </div>
+          <div>
+            <label class="field-label">${XL("walletType")}</label>
+            <select name="type" class="field">
+              ${[["cash", XL("typeCash")], ["bank", XL("typeBank")], ["digital", XL("typeDigital")]].map(([v, l]) => `<option value="${v}" ${(w?.type || "cash") === v ? "selected" : ""}>${l}</option>`).join("")}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(t.walletBalance)}</label>
+              <input name="balance" type="number" step="any" class="field" value="${w ? w.balance : 0}" required>
+            </div>
+            <div>
+              <label class="field-label">${esc(t.fieldCurrency)}</label>
+              <select name="currency" class="field">
+                ${["IDR", "USD", "EUR"].map(c => `<option value="${c}" ${(w?.currency || state.preferences.currency) === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.walletLogo)}</label>
+            <div class="flex items-center gap-3">
+              <div id="w-logo-preview" class="clay-wallet" style="background:${esc(w?.color || "#dfc9f5")};">
+                ${logoData ? `<img src="${esc(logoData)}" alt="preview">` : esc(w?.icon || "💳")}
+              </div>
+              <div class="flex-1 space-y-2">
+                <div class="flex gap-4 text-xs font-bold">
+                  <label class="flex items-center gap-1"><input type="radio" name="logo-mode" value="url" checked>${XL("pasteUrl")}</label>
+                  <label class="flex items-center gap-1"><input type="radio" name="logo-mode" value="file"> ${XL("uploadFile")}</label>
+                </div>
+                <input id="w-logo-url" type="url" class="field !py-2 text-xs" placeholder="https://raw.githubusercontent.com/nama/repo/main/logo.png" value="${esc(/^https?:\/\//.test(logoData) ? logoData : "")}">
+                <input id="w-logo-file" type="file" accept="image/*" class="field !py-2 text-xs" hidden>
+                <button type="button" id="w-logo-remove" class="app-button light-button !py-1.5 !px-3 text-xs" ${logoData ? "" : "hidden"}>${esc(t.removeLogo)}</button>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#d9c6f5;color:#48342f;">${esc(t.save)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      const applyLogo = val => {
+        logoData = val;
+        $("w-logo-preview").innerHTML = val
+          ? `<img src="${esc(val)}" alt="preview">`
+          : esc(w?.icon || "💳");
+        $("w-logo-remove").hidden = !val;
+      };
+      document.querySelectorAll('input[name="logo-mode"]').forEach(r => {
+        r.onchange = () => {
+          const isFile = document.querySelector('input[name="logo-mode"]:checked').value === "file";
+          $("w-logo-url").hidden = isFile;
+          $("w-logo-file").hidden = !isFile;
+        };
+      });
+      // Ubah tautan halaman GitHub (blob) menjadi tautan raw otomatis
+      const toRawLogo = v => {
+        const m = v.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+        return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${m[3]}` : v;
+      };
+      $("w-logo-url").oninput = ev => {
+        const raw = ev.target.value.trim();
+        const v = toRawLogo(raw);
+        if (v !== raw) ev.target.value = v;
+        applyLogo(/^https?:\/\//.test(v) ? v : "");
+      };
+      $("w-logo-file").onchange = ev => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        if (file.size > 100 * 1024) {
+          showToast(XL("fileTooBig"));
+          ev.target.value = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => applyLogo(reader.result);
+        reader.readAsDataURL(file);
+      };
+      $("w-logo-remove").onclick = () => {
+        $("w-logo-url").value = "";
+        $("w-logo-file").value = "";
+        applyLogo("");
+      };
+      $("wallet-form").onsubmit = async ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const name = fd.get("name").toString().trim();
+        const newBalance = Number(fd.get("balance")) || 0;
+        const currency = fd.get("currency").toString();
+        const type = fd.get("type").toString();
+        const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD lokal
+
+        if (w) {
+          const row = state.wallets.find(x => x.id === w.id);
+          const { error: upErr } = await sb
+            .from("wallets")
+            .update({ name, type, currency, logo_url: logoData || null })
+            .eq("id", row.dbId);
+          if (upErr) {
+            showToast(XL("errSaveWallet") + upErr.message);
+            return;
+          }
+          // Perubahan saldo manual dicatat sebagai koreksi
+          const diff = newBalance - (Number(w.balance) || 0);
+          if (diff !== 0) {
+            const { error: adjErr } = await sb.from("transactions").insert({
+              user_id: currentUserId,
+              type: "adjustment",
+              amount: diff,
+              wallet_id: row.dbId,
+              transaction_date: today,
+              notes: "Koreksi saldo manual"
+            });
+            if (adjErr) {
+              showToast(XL("errAdj") + adjErr.message);
+              return;
+            }
+          }
+        } else {
+          const { error: insErr } = await sb.from("wallets").insert({
+            user_id: currentUserId,
+            name,
+            type,
+            currency,
+            initial_balance: newBalance,
+            logo_url: logoData || null
+          });
+          if (insErr) {
+            showToast(XL("errCreateWallet") + insErr.message);
+            return;
+          }
+        }
+
+        await reloadFromDatabase();
+        closeModal();
+        renderAll();
+        showToast(t.toastSaved);
+      };
+    };
+
+    // =====================================================
+    // 3. ACTIVITY RENDERING (DYNAMIC CATEGORY, 3 CHARTS)
+    // =====================================================
+    const fillActivityFilters = () => {
+      const t = T();
+      const prevWallet = $("wallet-filter").value || "all";
+      $("wallet-filter").innerHTML = `<option value="all">${esc(t.allWallets)}</option>` +
+        state.wallets.map(w => `<option value="${esc(w.id)}">${esc(w.name)}</option>`).join("");
+      $("wallet-filter").value = prevWallet;
+
+      fillCategoryFilter();
+    };
+
+    const fillCategoryFilter = () => {
+      const t = T();
+      const typeVal = $("type-filter").value || "all";
+      const prevCat = $("category-filter").value || "all";
+      let html = `<option value="all">${esc(t.allCats)}</option>`;
+
+      if (typeVal === "income") {
+        html += state.categories.income.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      } else if (typeVal === "expense") {
+        html += state.categories.expense.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      } else if (typeVal === "transfer") {
+        html += `<option value="Transfer">Transfer</option>`;
+      } else {
+        html += `<optgroup label="${esc(t.typeIncome)}">` +
+          state.categories.income.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("") +
+          `</optgroup><optgroup label="${esc(t.typeExpense)}">` +
+          state.categories.expense.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("") +
+          `</optgroup><optgroup label="${esc(t.typeTransfer)}"><option value="Transfer">Transfer</option></optgroup>`;
+      }
+      $("category-filter").innerHTML = html;
+      const validValues = Array.from($("category-filter").options).map(o => o.value);
+      $("category-filter").value = validValues.includes(prevCat) ? prevCat : "all";
+    };
+
+    const getFilteredTransactions = () => {
+      const q = ($("search").value || "").trim().toLowerCase();
+      const typeVal = $("type-filter").value || "all";
+      const catVal = $("category-filter").value || "all";
+      const wVal = $("wallet-filter").value || "all";
+      const fromVal = $("date-from").value || "";
+      const toVal = $("date-to").value || "";
+
+      return state.transactions.filter(tx => {
+        if (typeVal !== "all" && tx.type !== typeVal) return false;
+        if (catVal !== "all" && tx.category !== catVal) return false;
+        if (wVal !== "all" && tx.walletId !== wVal && tx.toWalletId !== wVal) return false;
+        if (fromVal && tx.date < fromVal) return false;
+        if (toVal && tx.date > toVal) return false;
+        if (q) {
+          const wName = walletById(tx.walletId)?.name || "";
+          const hay = `${tx.category} ${tx.note || ""} ${wName} ${tx.date}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      }).sort((a, b) => b.date.localeCompare(a.date));
+    };
+
+    // Custom Chart.js plugin to draw percentage labels inside 100% stacked horizontal bar
+    const stackedPctPlugin = {
+      id: "stackedPctLabels",
+      afterDatasetsDraw(chart) {
+        if (chart.config._customMode !== "block") return;
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = "800 13px 'DM Sans', sans-serif";
+        ctx.fillStyle = "#48342f";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        chart.data.datasets.forEach((ds, i) => {
+          const meta = chart.getDatasetMeta(i);
+          if (meta.hidden) return;
+          meta.data.forEach((bar, idx) => {
+            const val = Number(ds.data[idx]) || 0;
+            if (val >= 7) {
+              const x = (bar.base + bar.x) / 2;
+              ctx.fillText(`${Math.round(val)}%`, x, bar.y);
+            }
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    const renderActivityChart = list => {
+      const t = T();
+      const cur = state.preferences.currency;
+      const mode = $("activity-chart-type").value || activityChartType;
+      activityChartType = mode;
+
+      const container = $("activity-chart-container");
+      container.classList.toggle("compact", mode === "block");
+
+      if (activityChartInst) activityChartInst.destroy();
+      const ctx = $("activity-chart");
+
+      const incTotal = list.filter(x => x.type === "income").reduce((s, x) => s + convert(x.amount, x.currency, cur), 0);
+      const expTotal = list.filter(x => x.type === "expense").reduce((s, x) => s + convert(x.amount, x.currency, cur), 0);
+      const trfTotal = list.filter(x => x.type === "transfer").reduce((s, x) => s + convert(x.amount, x.currency, cur), 0);
+
+      if (mode === "bar") {
+        // X-axis = Category! Grouped by Pemasukan, Pengeluaran, Transfer
+        const catOrder = [];
+        const mapInc = {}, mapExp = {}, mapTrf = {};
+        list.forEach(tx => {
+          const cat = tx.category || "Lainnya";
+          if (!catOrder.includes(cat)) catOrder.push(cat);
+          const amt = convert(tx.amount, tx.currency, cur);
+          if (tx.type === "income") mapInc[cat] = (mapInc[cat] || 0) + amt;
+          else if (tx.type === "expense") mapExp[cat] = (mapExp[cat] || 0) + amt;
+          else mapTrf[cat] = (mapTrf[cat] || 0) + amt;
+        });
+
+        activityChartInst = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: catOrder.length ? catOrder : ["-"],
+            datasets: [
+              { label: t.typeIncome, data: catOrder.map(c => mapInc[c] || 0), backgroundColor: "#b8d9fb", borderRadius: 10, maxBarThickness: 42 },
+              { label: t.typeExpense, data: catOrder.map(c => mapExp[c] || 0), backgroundColor: "#ffadbc", borderRadius: 10, maxBarThickness: 42 },
+              { label: t.typeTransfer, data: catOrder.map(c => mapTrf[c] || 0), backgroundColor: "#ffe18c", borderRadius: 10, maxBarThickness: 42 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtMoney(c.raw, cur)}` } }
+            },
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: { stacked: true, beginAtZero: true, grid: { color: "#f3e5da" } }
+            }
+          }
+        });
+      } else if (mode === "block") {
+        // 100% Stacked Horizontal Bar comparing Pemasukan, Pengeluaran, Transfer
+        const grand = incTotal + expTotal + trfTotal;
+        const incPct = grand ? (incTotal / grand) * 100 : 0;
+        const expPct = grand ? (expTotal / grand) * 100 : 0;
+        const trfPct = grand ? (trfTotal / grand) * 100 : 0;
+
+        activityChartInst = new Chart(ctx, {
+          type: "bar",
+          plugins: [stackedPctPlugin],
+          data: {
+            labels: [""],
+            datasets: [
+              { label: `${t.typeIncome} (${fmtMoney(incTotal, cur)})`, data: [incPct], rawVal: incTotal, backgroundColor: "#b8d9fb", borderRadius: 10, barThickness: 42 },
+              { label: `${t.typeExpense} (${fmtMoney(expTotal, cur)})`, data: [expPct], rawVal: expTotal, backgroundColor: "#ffadbc", borderRadius: 10, barThickness: 42 },
+              { label: `${t.typeTransfer} (${fmtMoney(trfTotal, cur)})`, data: [trfPct], rawVal: trfTotal, backgroundColor: "#ffe18c", borderRadius: 10, barThickness: 42 }
+            ]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                callbacks: {
+                  label: c => `${c.dataset.label} — ${c.raw.toFixed(1)}%`
+                }
+              }
+            },
+            scales: {
+              x: { stacked: true, min: 0, max: 100, ticks: { callback: v => `${v}%` }, grid: { color: "#f3e5da" } },
+              y: { stacked: true, grid: { display: false } }
+            }
+          }
+        });
+        activityChartInst.config._customMode = "block";
+        activityChartInst.update();
+      } else {
+        // Pie Chart
+        activityChartInst = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: [t.typeIncome, t.typeExpense, t.typeTransfer],
+            datasets: [{
+              data: [incTotal, expTotal, trfTotal],
+              backgroundColor: ["#b8d9fb", "#ffadbc", "#ffe18c"],
+              borderColor: "#fffdf8",
+              borderWidth: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: { callbacks: { label: c => `${c.label}: ${fmtMoney(c.raw, cur)}` } }
+            }
+          }
+        });
+      }
+    };
+
+    const renderActivity = () => {
+      const t = T();
+      fillActivityFilters();
+      const list = getFilteredTransactions();
+      const cur = state.preferences.currency;
+
+      const incSum = list.filter(x => x.type === "income").reduce((s, x) => s + convert(x.amount, x.currency, cur), 0);
+      const expSum = list.filter(x => x.type === "expense").reduce((s, x) => s + convert(x.amount, x.currency, cur), 0);
+
+      $("filtered-income-total").textContent = fmtMoney(incSum, cur, true);
+      $("filtered-expense-total").textContent = fmtMoney(expSum, cur, true);
+
+      renderActivityChart(list);
+
+      $("activity-list").innerHTML = list.length
+        ? list.map(txRowHtml).join("")
+        : `<p class="muted text-sm font-bold py-6 text-center">${esc(t.noTx)}</p>`;
+      bindTxClicks($("activity-list"));
+    };
+
+    // Transaction Modals (Add, Detail, Edit)
+    const openTxModal = (type = "expense", editTx = null) => {
+      const t = T();
+      const txType = editTx ? editTx.type : type;
+      const typeLabel = txType === "income" ? t.typeIncome : txType === "expense" ? t.typeExpense : t.typeTransfer;
+      const cats = txType === "income" ? state.categories.income : txType === "expense" ? state.categories.expense : ["Transfer"];
+      const todayIso = "2026-11-20";
+
+      openModal(editTx ? t.txEditTitle : t.txAddTitle(typeLabel), `
+        <form id="tx-form" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(t.fieldAmount)}</label>
+              <input name="amount" type="number" min="1" step="any" class="field" value="${editTx ? editTx.amount : ""}" required>
+            </div>
+            <div>
+              <label class="field-label">${esc(t.fieldCurrency)}</label>
+              <select name="currency" class="field">
+                ${["IDR", "USD", "EUR"].map(c => `<option value="${c}" ${(editTx?.currency || state.preferences.currency) === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(txType === "transfer" ? t.fieldFromWallet : t.fieldWallet)}</label>
+              <select name="walletId" class="field">
+                ${state.wallets.map(w => `<option value="${esc(w.id)}" ${(editTx?.walletId || state.wallets[0]?.id) === w.id ? "selected" : ""}>${esc(w.name)}</option>`).join("")}
+              </select>
+            </div>
+            ${txType === "transfer" ? `
+              <div>
+                <label class="field-label">${esc(t.fieldToWallet)}</label>
+                <select name="toWalletId" class="field">
+                  ${state.wallets.map((w, i) => `<option value="${esc(w.id)}" ${(editTx?.toWalletId || state.wallets[1]?.id || state.wallets[0]?.id) === w.id ? "selected" : ""}>${esc(w.name)}</option>`).join("")}
+                </select>
+              </div>
+            ` : `
+              <div>
+                <label class="field-label">${esc(t.fieldCategory)}</label>
+                <select name="category" class="field">
+                  ${cats.map(c => `<option value="${esc(c)}" ${editTx?.category === c ? "selected" : ""}>${esc(c)}</option>`).join("")}
+                </select>
+              </div>
+            `}
+          </div>
+          <div>
+            <label class="field-label">${esc(t.fieldDate)}</label>
+            <input name="date" type="date" class="field" value="${esc(editTx?.date || todayIso)}" required>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.fieldNote)}</label>
+            <input name="note" class="field" value="${esc(editTx?.note || "")}">
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#d9c6f5;color:#48342f;">${esc(t.save)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      $("tx-form").onsubmit = async ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const amountInput = Number(fd.get("amount")) || 0;
+        const inputCurrency = fd.get("currency").toString();
+        const walletId = fd.get("walletId").toString();
+        const toWalletId = txType === "transfer" ? fd.get("toWalletId").toString() : "";
+        const category = txType === "transfer" ? "Transfer" : fd.get("category").toString();
+        const date = fd.get("date").toString();
+        const note = fd.get("note").toString().trim();
+
+        if (!(amountInput > 0)) {
+          showToast(XL("errAmount"));
+          return;
+        }
+        const srcW = walletById(walletId);
+        const dstW = txType === "transfer" ? walletById(toWalletId) : null;
+        if (!srcW) {
+          showToast(XL("errPickWallet"));
+          return;
+        }
+        if (txType === "transfer" && (!dstW || dstW.id === srcW.id)) {
+          showToast(XL("errPickTo"));
+          return;
+        }
+        const catRow = txType === "transfer"
+          ? null
+          : state.categoryRows.find(r => r.kind === txType && r.name === category);
+        if (txType !== "transfer" && !catRow) {
+          showToast(XL("errCatNotFound"));
+          return;
+        }
+
+        // Jumlah disimpan dalam mata uang dompet, dengan kurs saat ini
+        const amount = Number(convert(amountInput, inputCurrency, srcW.currency).toFixed(2));
+        const toAmount = dstW
+          ? Number(convert(amountInput, inputCurrency, dstW.currency).toFixed(2))
+          : null;
+
+        const payload = {
+          user_id: currentUserId,
+          type: txType,
+          amount,
+          wallet_id: srcW.dbId,
+          to_wallet_id: dstW ? dstW.dbId : null,
+          to_amount: toAmount,
+          category_id: catRow ? catRow.id : null,
+          transaction_date: date,
+          notes: note || null
+        };
+
+        const { error } = editTx
+          ? await sb.from("transactions").update(payload).eq("id", editTx.dbId)
+          : await sb.from("transactions").insert(payload);
+        if (error) {
+          showToast(XL("errSaveTx") + error.message);
+          return;
+        }
+
+        await reloadFromDatabase();
+        closeModal();
+        renderAll();
+        showToast(t.toastSaved);
+      };
+    };
+
+    const openTxDetailModal = txId => {
+      const t = T();
+      const tx = state.transactions.find(x => x.id === txId);
+      if (!tx) return;
+      const w = walletById(tx.walletId);
+      const wTo = tx.toWalletId ? walletById(tx.toWalletId) : null;
+      openModal(t.txDetail, `
+        <div class="space-y-3 text-sm">
+          <div class="soft-surface p-4 bg-white space-y-2">
+            <div class="flex justify-between"><span class="muted font-bold">${esc(t.fieldCategory)}</span><strong>${esc(tx.category)}</strong></div>
+            <div class="flex justify-between"><span class="muted font-bold">${esc(t.fieldAmount)}</span><strong>${esc(fmtMoney(tx.amount, tx.currency))}</strong></div>
+            <div class="flex justify-between"><span class="muted font-bold">${esc(t.fieldDate)}</span><strong>${esc(fmtDate(tx.date, true))}</strong></div>
+            <div class="flex justify-between"><span class="muted font-bold">${esc(t.fieldWallet)}</span><strong>${esc(tx.type === "transfer" && wTo ? `${w?.name || "-"} → ${wTo.name}` : (w?.name || "-"))}</strong></div>
+            <div class="flex justify-between"><span class="muted font-bold">${esc(t.fieldNote)}</span><strong>${esc(tx.note || "-")}</strong></div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="tx-del" class="app-button text-sm" style="background:#ffadbc;color:#48342f;">${esc(t.delete)}</button>
+            <button type="button" id="tx-edit" class="app-button text-sm" style="background:#d9c6f5;color:#48342f;">${esc(t.edit)}</button>
+          </div>
+        </div>
+      `);
+      $("tx-edit").onclick = () => openTxModal(tx.type, tx);
+      $("tx-del").onclick = async () => {
+        const { error } = await sb.from("transactions").delete().eq("id", tx.dbId);
+        if (error) {
+          showToast(XL("errDelTx") + error.message);
+          return;
+        }
+        await reloadFromDatabase();
+        closeModal();
+        renderAll();
+        showToast(t.toastDeleted);
+      };
+    };
+
+    // =====================================================
+    // 4. BUDGET RENDERING (MONTH FILTER + CURRENCY)
+    // =====================================================
+    const renderBudgets = () => {
+      const t = T();
+      const cur = state.preferences.currency;
+      $("budget-month-filter").value = selectedBudgetMonth;
+      $("budget-page-title").textContent = t.budgetTitle(fmtMonthLabel(selectedBudgetMonth));
+
+      const monthBudgets = state.budgets.filter(b => b.month === selectedBudgetMonth);
+      const monthExp = state.transactions.filter(tx => tx.type === "expense" && (tx.date || "").startsWith(selectedBudgetMonth));
+
+      let sumLimit = 0;
+      let sumSpent = 0;
+
+      const cardsHtml = monthBudgets.map(b => {
+        const limitDisp = convert(b.limit, b.currency || "IDR", cur);
+        const spentDisp = monthExp
+          .filter(tx => tx.category === b.category)
+          .reduce((s, tx) => s + convert(tx.amount, tx.currency, cur), 0);
+        sumLimit += limitDisp;
+        sumSpent += spentDisp;
+
+        const pct = limitDisp > 0 ? Math.round((spentDisp / limitDisp) * 100) : 0;
+        const barW = Math.min(100, pct);
+        const barColor = pct >= 100 ? "#f26b8a" : pct >= 75 ? "#ffd166" : "#8cd79f";
+
+        return `
+          <article class="surface bg-white p-5 space-y-3">
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <h3 class="font-extrabold text-lg">${esc(b.category)}</h3>
+                <p class="muted text-xs font-bold">${esc(fmtMoney(b.limit, b.currency || "IDR"))}</p>
+              </div>
+              <div class="flex gap-1.5">
+                <button type="button" class="app-button light-button !py-1.5 !px-2.5 text-xs" data-edit-b="${esc(b.id)}">${esc(t.edit)}</button>
+                <button type="button" class="app-button !py-1.5 !px-2.5 text-xs" style="background:#ffadbc;color:#48342f;" data-del-b="${esc(b.id)}">×</button>
+              </div>
+            </div>
+            <div class="clay-progress"><div style="width:${barW}%;background:${barColor};"></div></div>
+            <div class="flex justify-between text-xs font-extrabold">
+              <span>${esc(fmtMoney(spentDisp, cur))} / ${esc(fmtMoney(limitDisp, cur))}</span>
+              <span style="color:${pct >= 100 ? "#c03252" : "#4a6b54"};">${pct >= 100 ? esc(t.overBudget) : esc(t.usedPct(pct))}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      $("budget-total").textContent = fmtMoney(sumLimit, cur, true);
+      $("budget-spent").textContent = fmtMoney(sumSpent, cur, true);
+      $("budget-left").textContent = fmtMoney(sumLimit - sumSpent, cur, true);
+
+      $("budget-list").innerHTML = monthBudgets.length
+        ? cardsHtml
+        : `<div class="surface bg-white p-8 text-center sm:col-span-2 lg:col-span-3"><p class="muted font-bold">${esc(t.noBudget)}</p></div>`;
+
+      $("budget-list").querySelectorAll("[data-edit-b]").forEach(btn => {
+        btn.onclick = () => openBudgetModal(btn.dataset.editB);
+      });
+      $("budget-list").querySelectorAll("[data-del-b]").forEach(btn => {
+        btn.onclick = async () => {
+          const row = state.budgets.find(b => b.id === btn.dataset.delB);
+          const { error } = await sb.from("budgets").delete().eq("id", row.dbId);
+          if (error) {
+            showToast(XL("errDelBudget") + error.message);
+            return;
+          }
+          await reloadFromDatabase();
+          renderBudgets();
+          showToast(t.toastDeleted);
+        };
+      });
+    };
+
+    const openBudgetModal = (editId = null) => {
+      const t = T();
+      const b = editId ? state.budgets.find(x => x.id === editId) : null;
+      openModal(b ? t.budgetEditTitle : t.budgetAddTitle, `
+        <form id="budget-form" class="space-y-4">
+          <div>
+            <label class="field-label">${esc(t.fieldCategory)}</label>
+            <select name="category" class="field">
+              ${state.categories.expense.map(c => `<option value="${esc(c)}" ${b?.category === c ? "selected" : ""}>${esc(c)}</option>`).join("")}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(t.budgetLimit)}</label>
+              <input name="limit" type="number" min="1" step="any" class="field" value="${b ? b.limit : ""}" required>
+            </div>
+            <div>
+              <label class="field-label">${esc(t.fieldCurrency)}</label>
+              <select name="currency" class="field">
+                ${["IDR", "USD", "EUR"].map(c => `<option value="${c}" ${(b?.currency || state.preferences.currency) === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.budgetMonth)}</label>
+            <input name="month" type="month" class="field" value="${esc(b?.month || selectedBudgetMonth)}" required>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#d9c6f5;color:#48342f;">${esc(t.save)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      $("budget-form").onsubmit = async ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const catLabel = fd.get("category").toString();
+        const limit = Number(fd.get("limit")) || 0;
+        const currency = fd.get("currency").toString();
+        const month = fd.get("month").toString(); // YYYY-MM
+
+        if (!(limit > 0)) {
+          showToast(XL("errBudgetLimit"));
+          return;
+        }
+        const catRow = state.categoryRows.find(r => r.kind === "expense" && r.name === catLabel);
+        if (!catRow) {
+          showToast(XL("errCatNotFound"));
+          return;
+        }
+
+        const payload = {
+          user_id: currentUserId,
+          category_id: catRow.id,
+          kind: "expense",
+          month: `${month}-01`,
+          amount: limit,
+          currency
+        };
+        const { error } = b
+          ? await sb.from("budgets").update(payload).eq("id", b.dbId)
+          : await sb.from("budgets").insert(payload);
+        if (error) {
+          showToast(error.code === "23505"
+            ? XL("errBudgetDup")
+            : XL("errSaveBudget") + error.message);
+          return;
+        }
+
+        selectedBudgetMonth = month;
+        await reloadFromDatabase();
+        closeModal();
+        renderBudgets();
+        showToast(t.toastSaved);
+      };
+    };
+
+    // =====================================================
+    // 5. SPLIT BILL (PATUNGAN) — TAX/SERVICE + INSTALLMENTS
+    // =====================================================
+    const calcBillTotals = bill => {
+      const subtotal = bill.items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
+      const taxAmt = bill.taxType === "percent" ? subtotal * ((Number(bill.taxValue) || 0) / 100) : (Number(bill.taxValue) || 0);
+      const serviceAmt = bill.serviceType === "percent" ? subtotal * ((Number(bill.serviceValue) || 0) / 100) : (Number(bill.serviceValue) || 0);
+      const grandTotal = subtotal + taxAmt + serviceAmt;
+
+      const shares = {};
+      bill.friends.forEach(f => { shares[f.id] = 0; });
+
+      if (bill.mode === "equal") {
+        const n = bill.friends.length || 1;
+        bill.friends.forEach(f => { shares[f.id] = grandTotal / n; });
+      } else if (bill.mode === "item") {
+        const rawShares = {};
+        bill.friends.forEach(f => { rawShares[f.id] = 0; });
+        let assignedSum = 0;
+        bill.items.forEach(it => {
+          const line = (Number(it.price) || 0) * (Number(it.qty) || 1);
+          const validF = (it.assignedTo || []).filter(fid => bill.friends.some(f => f.id === fid));
+          if (validF.length) {
+            const per = line / validF.length;
+            validF.forEach(fid => { rawShares[fid] += per; });
+            assignedSum += line;
+          }
+        });
+        const extra = taxAmt + serviceAmt;
+        bill.friends.forEach(f => {
+          const base = rawShares[f.id] || 0;
+          const propExtra = assignedSum > 0 ? (base / assignedSum) * extra : (extra / (bill.friends.length || 1));
+          shares[f.id] = base + propExtra;
+        });
+      } else {
+        bill.friends.forEach(f => { shares[f.id] = Number(f.manualAmount) || 0; });
+      }
+
+      let collected = 0;
+      let paidCount = 0;
+      const friendStats = bill.friends.map(f => {
+        const owed = shares[f.id] || 0;
+        const paid = (f.installments || []).reduce((s, ins) => s + (Number(ins.amount) || 0), 0);
+        const remain = Math.max(0, owed - paid);
+        const pct = owed > 0 ? Math.min(100, Math.round((paid / owed) * 100)) : (paid > 0 ? 100 : 0);
+        const status = owed <= 0 || paid >= owed - 0.5 ? "paid" : paid > 0 ? "partial" : "unpaid";
+        if (status === "paid") paidCount++;
+        collected += paid;
+        return { friend: f, owed, paid, remain, pct, status };
+      });
+
+      return { subtotal, taxAmt, serviceAmt, grandTotal, collected, paidCount, friendStats };
+    };
+
+    // Simpan satu tagihan utuh ke database, lalu muat ulang data
+    const saveBill = async bill => {
+      const payload = {
+        id: bill.dbId || null,
+        title: bill.title || "",
+        date: bill.date,
+        currency: bill.currency,
+        mode: bill.mode,
+        tax_type: bill.taxType === "percent" ? "percent" : "nominal",
+        tax_value: Number(bill.taxValue) || 0,
+        service_type: bill.serviceType === "percent" ? "percent" : "nominal",
+        service_value: Number(bill.serviceValue) || 0,
+        friends: bill.friends.map(f => ({
+          key: String(f.id),
+          name: f.name,
+          manual_amount: Number(f.manualAmount) || 0,
+          installments: (f.installments || []).map(i => ({
+            amount: Number(i.amount) || 0,
+            date: i.date,
+            note: i.note || null
+          }))
+        })),
+        items: bill.items.map(it => ({
+          name: it.name,
+          price: Number(it.price) || 0,
+          qty: Number(it.qty) || 1,
+          assigned: (it.assignedTo || []).map(String)
+        }))
+      };
+      const { data, error } = await sb.rpc("save_split_bill", { p: payload });
+      if (error) {
+        showToast(XL("errSaveBill") + error.message);
+        await reloadFromDatabase();
+        renderSplitBills();
+        return;
+      }
+      activeBillId = String(data);
+      await reloadFromDatabase();
+      renderSplitBills();
+    };
+
+    let billQueue = Promise.resolve();
+    const queueBillSave = bill => {
+      billQueue = billQueue.then(() => saveBill(bill));
+    };
+
+    const deleteBill = async bill => {
+      const { error } = await sb.from("split_bills").delete().eq("id", bill.dbId);
+      if (error) {
+        showToast(XL("errDelBill") + error.message);
+        return;
+      }
+      activeBillId = null;
+      await reloadFromDatabase();
+      renderSplitBills();
+    };
+
+    const renderSplitBills = () => {
+      const t = T();
+      if (!state.splitBills.length) {
+        $("bill-selector").innerHTML = "";
+        $("active-bill-panel").innerHTML = `<div class="surface bg-white p-8 text-center"><p class="muted font-bold">${esc(t.noBills)}</p></div>`;
+        return;
+      }
+      if (!state.splitBills.some(b => b.id === activeBillId)) {
+        activeBillId = state.splitBills[0].id;
+      }
+
+      // Selector Cards
+      $("bill-selector").innerHTML = state.splitBills.map(b => {
+        const calc = calcBillTotals(b);
+        const isActive = b.id === activeBillId;
+        const modeLbl = b.mode === "equal" ? t.modeEqual : b.mode === "item" ? t.modeItem : t.modeManual;
+        return `
+          <button type="button" class="soft-surface p-4 text-left transition-transform hover:-translate-y-0.5 ${isActive ? "selected-tab" : "bg-white"}" data-select-bill="${esc(b.id)}">
+            <div class="flex justify-between items-start gap-2 mb-1.5">
+              <strong class="text-base truncate">${esc(b.title)}</strong>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-white/80 shrink-0">${esc(modeLbl)}</span>
+            </div>
+            <p class="muted text-xs font-bold mb-2">${esc(fmtDate(b.date))}</p>
+            <div class="flex justify-between items-center text-xs font-extrabold">
+              <span>${esc(fmtMoney(calc.grandTotal, b.currency))}</span>
+              <span style="color:#4a6b54;">${esc(t.settledCount(calc.paidCount, b.friends.length))}</span>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      $("bill-selector").querySelectorAll("[data-select-bill]").forEach(btn => {
+        btn.onclick = () => { activeBillId = btn.dataset.selectBill; renderSplitBills(); };
+      });
+
+      // Active Bill Detail
+      const bill = state.splitBills.find(b => b.id === activeBillId);
+      const calc = calcBillTotals(bill);
+      const manualSum = bill.friends.reduce((s, f) => s + (Number(f.manualAmount) || 0), 0);
+      const manualDiff = calc.grandTotal - manualSum;
+
+      $("active-bill-panel").innerHTML = `
+        <div class="surface bg-[#fffdf8] p-5 sm:p-6 space-y-6">
+          <!-- Header & Mode Switch -->
+          <div class="flex flex-wrap justify-between items-start gap-3 pb-4 border-b-2 border-[#f1e1d4]">
+            <div>
+              <h2 class="font-extrabold text-2xl">${esc(bill.title)}</h2>
+              <p class="muted text-xs sm:text-sm font-bold mt-0.5">${esc(fmtDate(bill.date, true))} · ${esc(t.collectedLabel)}: ${esc(fmtMoney(calc.collected, bill.currency))} / ${esc(fmtMoney(calc.grandTotal, bill.currency))}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="sb-copy-btn" class="app-button light-button !py-2 !px-3.5 text-xs">${esc(t.copySummary)}</button>
+              <button type="button" id="sb-del-btn" class="app-button !py-2 !px-3.5 text-xs" style="background:#ffadbc;color:#48342f;">${esc(t.deleteBill)}</button>
+            </div>
+          </div>
+
+          <!-- 3 Mode Buttons -->
+          <div class="grid grid-cols-3 gap-2">
+            ${["equal", "item", "manual"].map(m => {
+              const lbl = m === "equal" ? t.modeEqual : m === "item" ? t.modeItem : t.modeManual;
+              return `<button type="button" class="app-button light-button text-xs sm:text-sm ${bill.mode === m ? "selected-tab" : ""}" data-sb-mode="${m}">${esc(lbl)}</button>`;
+            }).join("")}
+          </div>
+
+          <!-- Friends Section -->
+          <div>
+            <h3 class="font-extrabold text-lg mb-2.5">${esc(t.friendsTitle)}</h3>
+            <div class="flex flex-wrap gap-2 mb-3">
+              ${bill.friends.map(f => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#fff4e8] border border-[#e9cfc0] font-extrabold text-xs">
+                  ${esc(f.name)}
+                  ${bill.friends.length > 1 ? `<button type="button" class="text-[#a6304c] font-extrabold ml-1" data-del-friend="${esc(f.id)}">×</button>` : ""}
+                </span>
+              `).join("")}
+            </div>
+            <form id="sb-add-friend-form" class="flex gap-2">
+              <input id="sb-friend-name" class="field !min-h-0 !py-2 text-sm" placeholder="${esc(t.addFriendPh)}" required>
+              <button type="submit" class="app-button !py-2 text-xs shrink-0" style="background:#e9d8f8;color:#48342f;">${esc(t.addFriendBtn)}</button>
+            </form>
+          </div>
+
+          <!-- Items + Tax & Service (ALWAYS VISIBLE IN ALL 3 MODES) -->
+          <div class="space-y-3">
+            <h3 class="font-extrabold text-lg">${esc(t.itemsTitle)}</h3>
+            <div class="space-y-2.5">
+              ${bill.items.map(it => {
+                const lineTotal = (Number(it.price) || 0) * (Number(it.qty) || 1);
+                return `
+                  <div class="soft-surface bg-white p-3.5 space-y-2">
+                    <div class="flex justify-between items-center gap-2">
+                      <div class="min-w-0">
+                        <p class="font-extrabold text-sm">${esc(it.name)} <span class="muted">×${it.qty}</span></p>
+                        <p class="muted text-xs font-bold">${esc(fmtMoney(it.price, bill.currency))} / pcs</p>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <strong class="text-sm">${esc(fmtMoney(lineTotal, bill.currency))}</strong>
+                        <button type="button" class="app-button !py-1 !px-2 text-xs" style="background:#ffadbc;color:#48342f;" data-del-item="${esc(it.id)}">×</button>
+                      </div>
+                    </div>
+                    ${bill.mode === "item" ? `
+                      <div class="pt-2 border-t border-[#f2e4d9]">
+                        <p class="muted text-[11px] font-bold mb-1.5">${esc(t.selectFriendsHint)}</p>
+                        <div class="flex flex-wrap gap-1.5">
+                          ${bill.friends.map(f => {
+                            const on = (it.assignedTo || []).includes(f.id);
+                            return `<button type="button" class="px-2.5 py-1 rounded-xl text-xs font-extrabold border ${on ? "bg-[#d9c6f5] border-[#a886db]" : "bg-[#fffaf5] border-[#ead8cc] muted"}" data-toggle-assign="${esc(it.id)}|${esc(f.id)}">${on ? "✓ " : ""}${esc(f.name)}</button>`;
+                          }).join("")}
+                        </div>
+                      </div>
+                    ` : ""}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+
+            <!-- Add Item Form -->
+            <form id="sb-add-item-form" class="grid grid-cols-1 sm:grid-cols-[2fr_1.2fr_0.7fr_auto] gap-2">
+              <input id="sb-item-name" class="field !min-h-0 !py-2 text-sm" placeholder="${esc(t.itemNamePh)}" required>
+              <input id="sb-item-price" type="number" min="0" step="any" class="field !min-h-0 !py-2 text-sm" placeholder="${esc(t.itemPricePh)}" required>
+              <input id="sb-item-qty" type="number" min="1" value="1" class="field !min-h-0 !py-2 text-sm" placeholder="${esc(t.itemQtyPh)}" required>
+              <button type="submit" class="app-button !py-2 text-xs" style="background:#b8d9fb;color:#48342f;">${esc(t.addItemBtn)}</button>
+            </form>
+
+            <!-- Tax & Service Fee Box (Always visible in Equal, Item, & Manual modes) -->
+            <div class="soft-surface bg-[#fff8ef] p-4 grid sm:grid-cols-2 gap-3">
+              <div>
+                <label class="field-label text-xs">${esc(t.taxLabel)}</label>
+                <div class="flex gap-1.5">
+                  <select id="sb-tax-type" class="field !w-auto !min-h-0 !py-2 text-xs font-bold">
+                    <option value="percent" ${bill.taxType === "percent" ? "selected" : ""}>${esc(t.typePct)}</option>
+                    <option value="amount" ${bill.taxType === "amount" ? "selected" : ""}>${esc(t.typeAmt)}</option>
+                  </select>
+                  <input id="sb-tax-val" type="number" min="0" step="any" class="field !min-h-0 !py-2 text-sm" value="${bill.taxValue || 0}">
+                </div>
+              </div>
+              <div>
+                <label class="field-label text-xs">${esc(t.serviceLabel)}</label>
+                <div class="flex gap-1.5">
+                  <select id="sb-srv-type" class="field !w-auto !min-h-0 !py-2 text-xs font-bold">
+                    <option value="percent" ${bill.serviceType === "percent" ? "selected" : ""}>${esc(t.typePct)}</option>
+                    <option value="amount" ${bill.serviceType === "amount" ? "selected" : ""}>${esc(t.typeAmt)}</option>
+                  </select>
+                  <input id="sb-srv-val" type="number" min="0" step="any" class="field !min-h-0 !py-2 text-sm" value="${bill.serviceValue || 0}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Totals Summary -->
+            <div class="soft-surface p-4 text-sm space-y-1.5" style="background:#fff0b7;">
+              <div class="flex justify-between font-bold"><span>${esc(t.subtotal)}</span><span>${esc(fmtMoney(calc.subtotal, bill.currency))}</span></div>
+              <div class="flex justify-between font-bold"><span>${esc(t.taxLabel)}</span><span>${esc(fmtMoney(calc.taxAmt, bill.currency))}</span></div>
+              <div class="flex justify-between font-bold"><span>${esc(t.serviceLabel)}</span><span>${esc(fmtMoney(calc.serviceAmt, bill.currency))}</span></div>
+              <div class="flex justify-between font-extrabold text-base pt-1.5 border-t border-[#d8c47a]"><span>${esc(t.grandTotal)}</span><span>${esc(fmtMoney(calc.grandTotal, bill.currency))}</span></div>
+            </div>
+          </div>
+
+          <!-- Breakdown & Installment Payment Status -->
+          <div class="space-y-3">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+              <h3 class="font-extrabold text-lg">${esc(t.breakdownTitle)}</h3>
+              ${bill.mode === "manual" ? `
+                <span class="px-3 py-1 rounded-full text-xs font-extrabold" style="background:${Math.abs(manualDiff) < 1 ? "#c5ebce" : "#ffadbc"};">
+                  ${Math.abs(manualDiff) < 1 ? esc(t.manualMatch) : manualDiff > 0 ? esc(t.manualShort(fmtMoney(manualDiff, bill.currency))) : esc(t.manualOver(fmtMoney(Math.abs(manualDiff), bill.currency)))}
+                </span>
+              ` : ""}
+            </div>
+
+            <div class="space-y-2.5">
+              ${calc.friendStats.map(st => {
+                const badgeBg = st.status === "paid" ? "#c5ebce" : st.status === "partial" ? "#ffe18c" : "#ffadbc";
+                const badgeTxt = st.status === "paid" ? t.statusPaid : st.status === "partial" ? t.statusPartial(st.pct) : t.statusUnpaid;
+                return `
+                  <div class="soft-surface bg-white p-4 space-y-2.5">
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                      <div class="flex items-center gap-2">
+                        <strong class="text-base">${esc(st.friend.name)}</strong>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold" style="background:${badgeBg};">${esc(badgeTxt)}</span>
+                      </div>
+                      ${bill.mode === "manual" ? `
+                        <input type="number" min="0" step="any" class="field !w-36 !min-h-0 !py-1.5 text-sm font-extrabold text-right" value="${st.friend.manualAmount || 0}" data-manual-input="${esc(st.friend.id)}">
+                      ` : `
+                        <strong class="text-base">${esc(fmtMoney(st.owed, bill.currency))}</strong>
+                      `}
+                    </div>
+
+                    ${st.status === "partial" ? `
+                      <div class="space-y-1">
+                        <div class="clay-progress"><div style="width:${st.pct}%;background:#ffd166;"></div></div>
+                        <div class="flex justify-between text-xs font-bold muted">
+                          <span>${esc(t.paidLabel)}: ${esc(fmtMoney(st.paid, bill.currency))}</span>
+                          <span>${esc(t.remainLabel)}: ${esc(fmtMoney(st.remain, bill.currency))}</span>
+                        </div>
+                      </div>
+                    ` : ""}
+
+                    <div class="flex flex-wrap justify-end gap-2 pt-1">
+                      <button type="button" class="app-button light-button !py-1.5 !px-3 text-xs" data-open-inst="${esc(st.friend.id)}">${esc(t.btnInstallment)}</button>
+                      ${st.status !== "paid" ? `
+                        <button type="button" class="app-button !py-1.5 !px-3 text-xs" style="background:#c5ebce;color:#48342f;" data-mark-paid="${esc(st.friend.id)}">${esc(t.btnMarkPaid)}</button>
+                      ` : `
+                        <button type="button" class="app-button light-button !py-1.5 !px-3 text-xs" data-reset-pay="${esc(st.friend.id)}">${esc(t.btnResetPay)}</button>
+                      `}
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Bind Split Bill Actions
+      $("active-bill-panel").querySelectorAll("[data-sb-mode]").forEach(btn => {
+        btn.onclick = () => { bill.mode = btn.dataset.sbMode; queueBillSave(bill); renderSplitBills(); };
+      });
+
+      $("sb-add-friend-form").onsubmit = ev => {
+        ev.preventDefault();
+        const name = $("sb-friend-name").value.trim();
+        if (!name) return;
+        bill.friends.push({ id: uid("f"), name, manualAmount: 0, installments: [] });
+        queueBillSave(bill);
+        renderSplitBills();
+      };
+
+      $("active-bill-panel").querySelectorAll("[data-del-friend]").forEach(btn => {
+        btn.onclick = () => {
+          bill.friends = bill.friends.filter(f => f.id !== btn.dataset.delFriend);
+          queueBillSave(bill);
+          renderSplitBills();
+        };
+      });
+
+      $("sb-add-item-form").onsubmit = ev => {
+        ev.preventDefault();
+        const name = $("sb-item-name").value.trim();
+        const price = Number($("sb-item-price").value) || 0;
+        const qty = Math.max(1, Number($("sb-item-qty").value) || 1);
+        if (!name) return;
+        bill.items.push({ id: uid("it"), name, price, qty, assignedTo: bill.friends.map(f => f.id) });
+        queueBillSave(bill);
+        renderSplitBills();
+      };
+
+      $("active-bill-panel").querySelectorAll("[data-del-item]").forEach(btn => {
+        btn.onclick = () => {
+          bill.items = bill.items.filter(it => it.id !== btn.dataset.delItem);
+          queueBillSave(bill);
+          renderSplitBills();
+        };
+      });
+
+      $("active-bill-panel").querySelectorAll("[data-toggle-assign]").forEach(btn => {
+        btn.onclick = () => {
+          const [itId, fId] = btn.dataset.toggleAssign.split("|");
+          const it = bill.items.find(x => x.id === itId);
+          if (!it) return;
+          it.assignedTo = it.assignedTo || [];
+          if (it.assignedTo.includes(fId)) it.assignedTo = it.assignedTo.filter(x => x !== fId);
+          else it.assignedTo.push(fId);
+          queueBillSave(bill);
+          renderSplitBills();
+        };
+      });
+
+      const syncTaxSrv = () => {
+        bill.taxType = $("sb-tax-type").value;
+        bill.taxValue = Number($("sb-tax-val").value) || 0;
+        bill.serviceType = $("sb-srv-type").value;
+        bill.serviceValue = Number($("sb-srv-val").value) || 0;
+        queueBillSave(bill);
+        renderSplitBills();
+      };
+      $("sb-tax-type").onchange = syncTaxSrv;
+      $("sb-tax-val").onchange = syncTaxSrv;
+      $("sb-srv-type").onchange = syncTaxSrv;
+      $("sb-srv-val").onchange = syncTaxSrv;
+
+      $("active-bill-panel").querySelectorAll("[data-manual-input]").forEach(inp => {
+        inp.onchange = () => {
+          const f = bill.friends.find(x => x.id === inp.dataset.manualInput);
+          if (f) { f.manualAmount = Number(inp.value) || 0; queueBillSave(bill); renderSplitBills(); }
+        };
+      });
+
+      $("active-bill-panel").querySelectorAll("[data-mark-paid]").forEach(btn => {
+        btn.onclick = () => {
+          const st = calc.friendStats.find(x => x.friend.id === btn.dataset.markPaid);
+          if (!st) return;
+          st.friend.installments = st.friend.installments || [];
+          if (st.remain > 0) {
+            st.friend.installments.push({ id: uid("in"), amount: Math.round(st.remain), date: "2026-11-20", note: "Pelunasan" });
+          }
+          queueBillSave(bill);
+          renderSplitBills();
+        };
+      });
+
+      $("active-bill-panel").querySelectorAll("[data-reset-pay]").forEach(btn => {
+        btn.onclick = () => {
+          const f = bill.friends.find(x => x.id === btn.dataset.resetPay);
+          if (f) { f.installments = []; queueBillSave(bill); renderSplitBills(); }
+        };
+      });
+
+      $("active-bill-panel").querySelectorAll("[data-open-inst]").forEach(btn => {
+        btn.onclick = () => openInstallmentModal(bill.id, btn.dataset.openInst);
+      });
+
+      $("sb-del-btn").onclick = async () => {
+        await deleteBill(bill);
+        showToast(t.toastDeleted);
+      };
+
+      $("sb-copy-btn").onclick = () => {
+        const lines = [
+          `🧾 *${bill.title}* (${fmtDate(bill.date)})`,
+          `${t.grandTotal}: ${fmtMoney(calc.grandTotal, bill.currency)}`,
+          "---",
+          ...calc.friendStats.map(st => {
+            const stLbl = st.status === "paid" ? t.statusPaid : st.status === "partial" ? `${t.statusPartial(st.pct)} (${t.paidLabel} ${fmtMoney(st.paid, bill.currency)}, ${t.remainLabel} ${fmtMoney(st.remain, bill.currency)})` : t.statusUnpaid;
+            return `• ${st.friend.name}: ${fmtMoney(st.owed, bill.currency)} — ${stLbl}`;
+          })
+        ];
+        copyTextSafe(lines.join("\n"), t.toastCopySummary);
+      };
+    };
+
+    const openInstallmentModal = (billId, friendId) => {
+      const t = T();
+      const bill = state.splitBills.find(b => b.id === billId);
+      if (!bill) return;
+      const calc = calcBillTotals(bill);
+      const st = calc.friendStats.find(x => x.friend.id === friendId);
+      if (!st) return;
+
+      openModal(t.instModalTitle(st.friend.name), `
+        <div class="space-y-4">
+          <div class="soft-surface p-3.5 bg-white grid grid-cols-3 gap-2 text-center text-xs">
+            <div><p class="muted font-bold">Tagihan</p><strong class="text-sm">${esc(fmtMoney(st.owed, bill.currency))}</strong></div>
+            <div><p class="muted font-bold">${esc(t.paidLabel)}</p><strong class="text-sm" style="color:#4a6b54;">${esc(fmtMoney(st.paid, bill.currency))}</strong></div>
+            <div><p class="muted font-bold">${esc(t.remainLabel)}</p><strong class="text-sm" style="color:#a6304c;">${esc(fmtMoney(st.remain, bill.currency))}</strong></div>
+          </div>
+
+          <form id="inst-form" class="space-y-3">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="field-label !mb-0">${esc(t.instAmount)}</label>
+                ${st.remain > 0 ? `<button type="button" id="btn-fill-remain" class="text-xs font-extrabold underline" style="color:#76529d;">${esc(t.instFillRemain)}</button>` : ""}
+              </div>
+              <input id="inst-amt" name="amount" type="number" min="1" step="any" class="field" required>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="field-label">${esc(t.fieldDate)}</label>
+                <input name="date" type="date" class="field" value="2026-11-20" required>
+              </div>
+              <div>
+                <label class="field-label">${esc(t.fieldNote)}</label>
+                <input name="note" class="field" placeholder="${esc(t.instNote)}">
+              </div>
+            </div>
+            <button type="submit" class="app-button w-full text-sm" style="background:#c5ebce;color:#48342f;">${esc(t.instAddBtn)}</button>
+          </form>
+
+          <div>
+            <h3 class="font-extrabold text-sm mb-2">${esc(t.instHistory)}</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+              ${(st.friend.installments || []).length ? st.friend.installments.map(ins => `
+                <div class="flex justify-between items-center p-2.5 rounded-2xl bg-white border border-[#ead8cc] text-xs">
+                  <div>
+                    <strong class="block text-sm">${esc(fmtMoney(ins.amount, bill.currency))}</strong>
+                    <span class="muted font-bold">${esc(fmtDate(ins.date))}${ins.note ? " · " + esc(ins.note) : ""}</span>
+                  </div>
+                  <button type="button" class="app-button !py-1 !px-2 text-xs" style="background:#ffadbc;color:#48342f;" data-del-inst="${esc(ins.id)}">×</button>
+                </div>
+              `).join("") : `<p class="muted text-xs font-bold text-center py-3">${esc(t.instEmpty)}</p>`}
+            </div>
+          </div>
+        </div>
+      `);
+
+      const fillBtn = $("btn-fill-remain");
+      if (fillBtn) fillBtn.onclick = () => { $("inst-amt").value = Math.round(st.remain); };
+
+      $("inst-form").onsubmit = ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        st.friend.installments = st.friend.installments || [];
+        st.friend.installments.push({
+          id: uid("in"),
+          amount: Number(fd.get("amount")) || 0,
+          date: fd.get("date").toString(),
+          note: fd.get("note").toString().trim()
+        });
+        queueBillSave(bill);
+        renderSplitBills();
+        openInstallmentModal(billId, friendId);
+      };
+
+      $("modal-body").querySelectorAll("[data-del-inst]").forEach(btn => {
+        btn.onclick = () => {
+          st.friend.installments = (st.friend.installments || []).filter(x => x.id !== btn.dataset.delInst);
+          queueBillSave(bill);
+          renderSplitBills();
+          openInstallmentModal(billId, friendId);
+        };
+      });
+    };
+
+    const openNewBillModal = () => {
+      const t = T();
+      openModal(t.billModalTitle, `
+        <form id="new-bill-form" class="space-y-4">
+          <div>
+            <label class="field-label">${esc(t.billName)}</label>
+            <input name="title" class="field" placeholder="Mis. Nongkrong & Pizza" required>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(t.fieldDate)}</label>
+              <input name="date" type="date" class="field" value="2026-11-20" required>
+            </div>
+            <div>
+              <label class="field-label">${esc(t.fieldCurrency)}</label>
+              <select name="currency" class="field">
+                ${["IDR", "USD", "EUR"].map(c => `<option value="${c}" ${state.preferences.currency === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.billMode)}</label>
+            <select name="mode" class="field">
+              <option value="equal">${esc(t.modeEqual)}</option>
+              <option value="item">${esc(t.modeItem)}</option>
+              <option value="manual">${esc(t.modeManual)}</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.billFriends)}</label>
+            <input name="friends" class="field" value="${esc(state.profile.name.split(" ")[0] || "Agnes")}, Rani, Bima" required>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#ffe18c;color:#48342f;">${esc(t.save)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      $("new-bill-form").onsubmit = ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const fNames = fd.get("friends").toString().split(",").map(s => s.trim()).filter(Boolean);
+        const bill = {
+          id: uid("sb"),
+          title: fd.get("title").toString().trim(),
+          date: fd.get("date").toString(),
+          currency: fd.get("currency").toString(),
+          mode: fd.get("mode").toString(),
+          taxType: "percent",
+          taxValue: 0,
+          serviceType: "amount",
+          serviceValue: 0,
+          friends: (fNames.length ? fNames : ["Agnes"]).map(name => ({ id: uid("f"), name, manualAmount: 0, installments: [] })),
+          items: []
+        };
+        closeModal();
+        queueBillSave(bill);
+        showToast(t.toastSaved);
+      };
+    };
+
+    // =====================================================
+    // 6. PROFILE, PREFERENCES, EXPORT & CATEGORIES
+    // =====================================================
+    const renderProfile = () => {
+      const p = state.profile;
+      $("profile-name-display").textContent = p.name;
+      $("profile-username-display").textContent = p.username;
+      $("profile-email-display").textContent = p.email;
+      $("profile-bio-display").textContent = p.bio || "-";
+      $("profile-avatar-box").innerHTML = p.avatar
+        ? `<img src="${esc(p.avatar)}" alt="${esc(p.name)}" class="w-full h-full object-cover">`
+        : esc((p.name || "A").charAt(0).toUpperCase());
+
+      $("default-currency").value = state.preferences.currency;
+      $("usd-rate").value = state.preferences.usdRate;
+      $("eur-rate").value = state.preferences.eurRate;
+      $("privacy-setting").value = state.preferences.hiddenBalance ? "hide" : "show";
+
+      // Categories
+      $("income-category-tab").classList.toggle("selected-tab", selectedCategoryTab === "income");
+      $("expense-category-tab").classList.toggle("selected-tab", selectedCategoryTab === "expense");
+
+      const list = state.categories[selectedCategoryTab] || [];
+      $("category-list").innerHTML = list.map(cat => `
+        <div class="flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-[#fffaf5] border border-[#ead8cc] font-bold text-sm">
+          <span class="truncate">${esc(cat)}</span>
+          <button type="button" class="w-7 h-7 rounded-full border border-[#ead8cc] bg-white grid place-items-center text-xs font-extrabold hover:bg-[#ffadbc]" data-del-cat="${esc(cat)}">×</button>
+        </div>
+      `).join("");
+
+      $("category-list").querySelectorAll("[data-del-cat]").forEach(btn => {
+        btn.onclick = async () => {
+          const arr = state.categories[selectedCategoryTab];
+          if (arr.length <= 1) return;
+          const row = state.categoryRows.find(r => r.kind === selectedCategoryTab && r.name === btn.dataset.delCat);
+          const { error } = await sb.from("categories").delete().eq("id", row.id);
+          if (error) {
+            showToast(XL("errDelCat") + error.message);
+            return;
+          }
+          await reloadFromDatabase();
+          saveState();
+          renderProfile();
+          fillCategoryFilter();
+          showToast(T().toastDeleted);
+        };
+      });
+    };
+
+    const openEditProfileModal = () => {
+      const t = T();
+      const p = state.profile;
+      let avatarData = p.avatar || "";
+      openModal(t.editProfileTitle, `
+        <form id="profile-edit-form" class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div id="p-avatar-prev" class="w-16 h-16 rounded-2xl bg-[#fff8ed] border-2 border-[#ead8cc] overflow-hidden grid place-items-center text-2xl font-extrabold shrink-0">
+              ${avatarData ? `<img src="${esc(avatarData)}" class="w-full h-full object-cover">` : esc((p.name || "A").charAt(0).toUpperCase())}
+            </div>
+            <div class="flex-1 space-y-2">
+              <label class="field-label !mb-0">${esc(t.fieldAvatar)}</label>
+              <div class="flex gap-4 text-xs font-bold">
+                <label class="flex items-center gap-1"><input type="radio" name="avatar-mode" value="url" checked>${XL("pasteUrl")}</label>
+                <label class="flex items-center gap-1"><input type="radio" name="avatar-mode" value="file"> ${XL("uploadFile")}</label>
+              </div>
+              <input id="p-avatar-url" type="url" class="field !py-2 text-xs" placeholder="https://raw.githubusercontent.com/nama/repo/main/foto.png" value="${esc(/^https?:\/\//.test(avatarData) ? avatarData : "")}">
+              <input id="p-avatar-file" type="file" accept="image/*" class="field !py-2 text-xs" hidden>
+              <button type="button" id="p-avatar-rm" class="app-button light-button !py-1 !px-2.5 text-xs" ${avatarData ? "" : "hidden"}>${esc(t.removeAvatar)}</button>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.regName)}</label>
+            <input name="name" class="field" value="${esc(p.name)}" required>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">${esc(t.regUser)}</label>
+              <input name="username" class="field" value="${esc(p.username)}" required>
+            </div>
+            <div>
+              <label class="field-label">${esc(t.regEmail)}</label>
+              <input name="email" type="email" class="field" value="${esc(p.email)}" required>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">${esc(t.fieldBio)}</label>
+            <textarea name="bio" rows="2" class="field">${esc(p.bio || "")}</textarea>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#c5ebce;color:#48342f;">${esc(t.save)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      const applyAvatar = val => {
+        avatarData = val;
+        $("p-avatar-prev").innerHTML = val
+          ? `<img src="${esc(val)}" class="w-full h-full object-cover">`
+          : esc((p.name || "A").charAt(0).toUpperCase());
+        $("p-avatar-rm").hidden = !val;
+      };
+      const toRawAvatar = v => {
+        const m = v.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+        return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${m[3]}` : v;
+      };
+      document.querySelectorAll('input[name="avatar-mode"]').forEach(r => {
+        r.onchange = () => {
+          const isFile = document.querySelector('input[name="avatar-mode"]:checked').value === "file";
+          $("p-avatar-url").hidden = isFile;
+          $("p-avatar-file").hidden = !isFile;
+        };
+      });
+      $("p-avatar-url").oninput = ev => {
+        const raw = ev.target.value.trim();
+        const v = toRawAvatar(raw);
+        if (v !== raw) ev.target.value = v;
+        applyAvatar(/^https?:\/\//.test(v) ? v : "");
+      };
+      $("p-avatar-file").onchange = ev => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        if (file.size > 100 * 1024) {
+          showToast(XL("fileTooBig"));
+          ev.target.value = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => applyAvatar(reader.result);
+        reader.readAsDataURL(file);
+      };
+      $("p-avatar-rm").onclick = () => {
+        $("p-avatar-url").value = "";
+        $("p-avatar-file").value = "";
+        applyAvatar("");
+      };
+  $("profile-edit-form").onsubmit = async ev => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        let uname = fd.get("username").toString().trim();
+        if (uname && !uname.startsWith("@")) uname = "@" + uname;
+        const cleanUser = normUsername(uname);
+        const fullName = fd.get("name").toString().trim();
+        if (cleanUser && !USERNAME_RE.test(cleanUser)) {
+          showToast(t.errInvalidUsername);
+          return;
+        }
+        const { error } = await sb
+          .from("profiles")
+          .update({
+            full_name: fullName,
+            username: cleanUser || null,
+            avatar_url: avatarData || null
+          })
+          .eq("id", currentUserId);
+        if (error) {
+          showToast(XL("errSaveProfile") + error.message);
+          return;
+        }
+        state.profile = {
+          name: fullName,
+          username: cleanUser ? "@" + cleanUser : "",
+          email: fd.get("email").toString().trim(),
+          bio: fd.get("bio").toString().trim(),
+          avatar: avatarData
+        };
+        saveState();
+        closeModal();
+        renderAll();
+        showToast(t.toastSaved);
+      };
+    };
+
+    // Export Helpers (JSON & Full UTF-8 BOM CSV)
+    const downloadFile = (content, filename, mime) => {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const csvCell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+    const exportAllJson = () => {
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      downloadFile(JSON.stringify(state, null, 2), `celengan-aku-backup-${dateStamp}.json`, "application/json");
+      showToast(T().toastExportJson);
+    };
+
+    const exportAllCsv = () => {
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const rows = [];
+      rows.push(["[DOMPET]"]);
+      rows.push(["ID", "Nama", "Saldo", "Mata Uang"]);
+      state.wallets.forEach(w => rows.push([w.id, w.name, w.balance, w.currency]));
+      rows.push([]);
+      rows.push(["[TRANSAKSI]"]);
+      rows.push(["Tanggal", "Jenis", "Kategori", "Nominal", "Mata Uang", "Dompet", "Catatan"]);
+      state.transactions.forEach(tx => rows.push([tx.date, tx.type, tx.category, tx.amount, tx.currency, walletById(tx.walletId)?.name || "", tx.note || ""]));
+      rows.push([]);
+      rows.push(["[BUDGET]"]);
+      rows.push(["Bulan", "Kategori", "Batas", "Mata Uang"]);
+      state.budgets.forEach(b => rows.push([b.month, b.category, b.limit, b.currency || "IDR"]));
+      rows.push([]);
+      rows.push(["[PATUNGAN]"]);
+      rows.push(["Tagihan", "Tanggal", "Mode", "Mata Uang", "Total Akhir", "Teman", "Tagihan Teman", "Terbayar", "Sisa", "Status"]);
+      state.splitBills.forEach(b => {
+        const calc = calcBillTotals(b);
+        calc.friendStats.forEach(st => {
+          rows.push([b.title, b.date, b.mode, b.currency, calc.grandTotal, st.friend.name, st.owed, st.paid, st.remain, st.status]);
+        });
+      });
+
+      const csvText = "\uFEFF" + rows.map(r => r.map(csvCell).join(",")).join("\n");
+      downloadFile(csvText, `celengan-aku-data-${dateStamp}.csv`, "text/csv;charset=utf-8;");
+      showToast(T().toastExportCsv);
+    };
+
+    // =====================================================
+    // MASTER RENDER & EVENT LISTENERS
+    // =====================================================
+    const renderAll = () => {
+      applyTranslations();
+      renderNav();
+      renderHome();
+      renderWallets();
+      renderActivity();
+      renderBudgets();
+      renderSplitBills();
+      renderProfile();
+      lucide.createIcons();
+    };
+
+    // Quick Action Buttons
+    document.querySelectorAll("[data-action]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const act = btn.dataset.action;
+        if (act === "wallet") openWalletModal();
+        else if (act === "budget") openBudgetModal();
+        else openTxModal(act);
+      });
+    });
+
+    // Header & Preferences Controls
+    $("display-currency").addEventListener("change", e => { state.preferences.currency = e.target.value; saveState(); renderAll(); });
+    $("default-currency").addEventListener("change", e => { state.preferences.currency = e.target.value; saveState(); renderAll(); });
+    $("display-lang").addEventListener("change", e => { state.preferences.lang = e.target.value; saveState(); renderAll(); });
+    $("auth-lang").addEventListener("change", e => { state.preferences.lang = e.target.value; saveState(); applyTranslations(); });
+    $("privacy-btn").addEventListener("click", () => { state.preferences.hiddenBalance = !state.preferences.hiddenBalance; saveState(); renderAll(); });
+    $("privacy-setting").addEventListener("change", e => { state.preferences.hiddenBalance = e.target.value === "hide"; saveState(); renderAll(); });
+    $("usd-rate").addEventListener("change", e => { state.preferences.usdRate = Math.max(1, Number(e.target.value) || 16000); saveState(); renderAll(); });
+    $("eur-rate").addEventListener("change", e => { state.preferences.eurRate = Math.max(1, Number(e.target.value) || 17500); saveState(); renderAll(); });
+
+    // Activity Filter Controls
+    $("search").addEventListener("input", renderActivity);
+    $("type-filter").addEventListener("change", () => { fillCategoryFilter(); renderActivity(); });
+    $("category-filter").addEventListener("change", renderActivity);
+    $("wallet-filter").addEventListener("change", renderActivity);
+    $("date-from").addEventListener("change", renderActivity);
+    $("date-to").addEventListener("change", renderActivity);
+    $("activity-chart-type").addEventListener("change", renderActivity);
+    $("btn-reset-filter").addEventListener("click", () => {
+      $("search").value = "";
+      $("type-filter").value = "all";
+      fillCategoryFilter();
+      $("category-filter").value = "all";
+      $("wallet-filter").value = "all";
+      $("date-from").value = "";
+      $("date-to").value = "";
+      renderActivity();
+    });
+    $("copy-csv").addEventListener("click", () => {
+      const list = getFilteredTransactions();
+      const header = ["Tanggal", "Jenis", "Kategori", "Nominal", "Mata Uang", "Dompet", "Catatan"];
+      const csv = [header, ...list.map(tx => [tx.date, tx.type, tx.category, tx.amount, tx.currency, walletById(tx.walletId)?.name || "", tx.note || ""])]
+        .map(r => r.map(csvCell).join(",")).join("\n");
+      copyTextSafe(csv, T().toastCopyCsv);
+    });
+
+    // Profile Controls
+    $("btn-edit-profile").addEventListener("click", openEditProfileModal);
+    $("btn-export-json").addEventListener("click", exportAllJson);
+    $("btn-export-csv").addEventListener("click", exportAllCsv);
+    $("income-category-tab").addEventListener("click", () => { selectedCategoryTab = "income"; renderProfile(); });
+    $("expense-category-tab").addEventListener("click", () => { selectedCategoryTab = "expense"; renderProfile(); });
+    $("category-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const val = $("new-category").value.trim();
+      if (!val) return;
+      const arr = state.categories[selectedCategoryTab];
+      if (!arr.includes(val)) {
+        const { error } = await sb
+          .from("categories")
+          .insert({ user_id: currentUserId, name: val, kind: selectedCategoryTab });
+        if (error) {
+          showToast(XL("errAddCat") + error.message);
+          return;
+        }
+        await reloadFromDatabase();
+      }
+      $("new-category").value = "";
+      saveState();
+      renderProfile();
+      fillCategoryFilter();
+      showToast(T().toastSaved);
+    });
+
+    // Budget & Split Bill Controls
+    $("budget-month-filter").addEventListener("change", e => { selectedBudgetMonth = e.target.value || THIS_MONTH; renderBudgets(); });
+    $("btn-new-bill").addEventListener("click", openNewBillModal);
+    $("logo-link").addEventListener("click", e => { e.preventDefault(); switchPage("home"); });
+
+    // Auth Screen Event Listeners
+    $("tab-login").addEventListener("click", () => setAuthTab("login"));
+    $("tab-register").addEventListener("click", () => setAuthTab("register"));
+
+    const bindPasswordToggle = (btnId, inputId) => {
+      $(btnId).addEventListener("click", () => {
+        const inp = $(inputId);
+        const isHidden = inp.type === "password";
+        inp.type = isHidden ? "text" : "password";
+        $(btnId).innerHTML = `<i data-lucide="${isHidden ? "eye-off" : "eye"}" class="w-4 h-4"></i>`;
+        lucide.createIcons({ nodes: [$(btnId)] });
+      });
+    };
+    bindPasswordToggle("toggle-login-pw", "login-password");
+    bindPasswordToggle("toggle-reg-pw", "reg-password");
+    bindPasswordToggle("toggle-reg-confirm", "reg-confirm");
+
+    // ---------- Supabase Auth ----------
+    const SUPABASE_URL = "https://afrmxditmhbhgsggtvbp.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_FJGFq4Tego75aszka09Fhg_1SswKRu3";
+    const REMEMBER_KEY = "celengan_remember";
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const USERNAME_RE = /^[a-z0-9._]{3,30}$/;
+    const normUsername = s => String(s || "").trim().replace(/^@/, "").toLowerCase();
+
+    // Satu klien saja. Sesi disimpan di sessionStorage kalau "Ingat saya" tidak dicentang,
+    // dan di localStorage kalau dicentang.
+    const authStorage = {
+      getItem: k => sessionStorage.getItem(k) ?? localStorage.getItem(k),
+      setItem: (k, v) => (localStorage.getItem(REMEMBER_KEY) === "0" ? sessionStorage : localStorage).setItem(k, v),
+      removeItem: k => { sessionStorage.removeItem(k); localStorage.removeItem(k); }
+    };
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, storage: authStorage }
+    });
+
+    let currentUserId = null;
+    const PALETTE = ["#b8d9fb", "#c5ebce", "#ffe18c", "#e9d8f8", "#ffc6d3"];
+
+    // Muat ulang dompet dan kategori dari database ke state (sumber kebenaran)
+    const reloadFromDatabase = async () => {
+      const [catRes, walletRes, balRes, txRes, budgetRes] = await Promise.all([
+        sb.from("categories").select("id, name, kind").order("id"),
+        sb.from("wallets").select("id, name, type, currency, logo_url").order("id"),
+        sb.from("wallet_balances").select("id, current_balance").order("id"),
+        sb.from("transactions")
+          .select("id, type, amount, wallet_id, to_wallet_id, to_amount, category_id, transaction_date, notes")
+          .neq("type", "adjustment")
+          .order("transaction_date", { ascending: false })
+          .order("id", { ascending: false }),
+        sb.from("budgets").select("id, category_id, amount, currency, month").order("id")
+      ]);
+      const err = catRes.error || walletRes.error || balRes.error || txRes.error || budgetRes.error;
+      if (err) {
+        showToast(XL("errLoad") + err.message);
+        return;
+      }
+      const balById = new Map(balRes.data.map(b => [b.id, Number(b.current_balance)]));
+      state.categoryRows = catRes.data;
+      state.categories = {
+        income: catRes.data.filter(c => c.kind === "income").map(c => c.name),
+        expense: catRes.data.filter(c => c.kind === "expense").map(c => c.name)
+      };
+      state.wallets = walletRes.data.map((w, i) => ({
+        id: String(w.id),
+        dbId: w.id,
+        name: w.name,
+        type: w.type,
+        balance: balById.get(w.id) ?? 0,
+        currency: w.currency,
+        color: PALETTE[i % PALETTE.length],
+        icon: "💳",
+        logo: w.logo_url || ""
+      }));
+
+      // Transaksi dari database (koreksi saldo tidak ditampilkan sebagai transaksi)
+      const catName = new Map(catRes.data.map(c => [c.id, c.name]));
+      const walletCur = new Map(walletRes.data.map(w => [w.id, w.currency]));
+      state.transactions = txRes.data.map(x => ({
+        id: String(x.id),
+        dbId: x.id,
+        type: x.type,
+        amount: Number(x.amount),
+        currency: walletCur.get(x.wallet_id) || "IDR",
+        category: x.type === "transfer" ? "Transfer" : (catName.get(x.category_id) || "-"),
+        walletId: String(x.wallet_id),
+        toWalletId: x.to_wallet_id ? String(x.to_wallet_id) : "",
+        date: x.transaction_date,
+        note: x.notes || ""
+      }));
+      // Patungan: tagihan, peserta, item, pembagi, dan cicilan
+      const [billRes, partRes, itemRes, asgRes, payRes] = await Promise.all([
+        sb.from("split_bills")
+          .select("id, title, bill_date, currency, mode, tax_type, tax_value, service_type, service_value")
+          .order("bill_date", { ascending: false })
+          .order("id", { ascending: false }),
+        sb.from("bill_participants").select("id, bill_id, name, manual_amount").order("id"),
+        sb.from("bill_items").select("id, bill_id, name, price, qty").order("id"),
+        sb.from("bill_item_assignees").select("item_id, participant_id"),
+        sb.from("bill_payments").select("id, participant_id, amount, paid_on, note").order("id")
+      ]);
+      const billErr = billRes.error || partRes.error || itemRes.error || asgRes.error || payRes.error;
+      if (billErr) {
+        showToast(XL("errLoadBill") + billErr.message);
+        state.splitBills = [];
+      } else {
+        const grp = (arr, k) => arr.reduce((m, x) => ((m[x[k]] ||= []).push(x), m), {});
+        const partsByBill = grp(partRes.data, "bill_id");
+        const itemsByBill = grp(itemRes.data, "bill_id");
+        const payByPart = grp(payRes.data, "participant_id");
+        const asgByItem = grp(asgRes.data, "item_id");
+        state.splitBills = billRes.data.map(b => ({
+          id: String(b.id),
+          dbId: b.id,
+          title: b.title,
+          date: b.bill_date,
+          currency: b.currency,
+          mode: b.mode,
+          taxType: b.tax_type === "percent" ? "percent" : "amount",
+          taxValue: Number(b.tax_value),
+          serviceType: b.service_type === "percent" ? "percent" : "amount",
+          serviceValue: Number(b.service_value),
+          friends: (partsByBill[b.id] || []).map(pp => ({
+            id: String(pp.id),
+            dbId: pp.id,
+            name: pp.name,
+            manualAmount: Number(pp.manual_amount),
+            installments: (payByPart[pp.id] || []).map(x => ({
+              id: String(x.id),
+              amount: Number(x.amount),
+              date: x.paid_on,
+              note: x.note || ""
+            }))
+          })),
+          items: (itemsByBill[b.id] || []).map(it => ({
+            id: String(it.id),
+            dbId: it.id,
+            name: it.name,
+            price: Number(it.price),
+            qty: it.qty,
+            assignedTo: (asgByItem[it.id] || []).map(a => String(a.participant_id))
+          }))
+        }));
+      }
+
+      state.budgets = budgetRes.data.map(x => ({
+        id: String(x.id),
+        dbId: x.id,
+        category: catName.get(x.category_id) || "-",
+        limit: Number(x.amount),
+        currency: x.currency,
+        month: String(x.month).slice(0, 7)
+      }));
+      saveState();
+    };
+
+    const loadProfileIntoState = async user => {
+      const { data } = await sb
+        .from("profiles")
+        .select("full_name, username, email")
+        .eq("id", user.id)
+        .maybeSingle();
+      state.profile.name = data?.full_name || user.user_metadata?.full_name || state.profile.name;
+      state.profile.username = data?.username ? "@" + data.username : state.profile.username;
+      state.profile.email = data?.email || user.email;
+      currentUserId = user.id;
+      await reloadFromDatabase();
+      saveState();
+    };
+
+    $("login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const t = T();
+      const rawId = $("login-identifier").value.trim();
+      const pwVal = $("login-password").value;
+      const remember = $("login-remember").checked;
+
+      if (!rawId || !pwVal) {
+        showAuthError(t.errEmptyLogin);
+        return;
+      }
+
+      let email = rawId;
+      if (!EMAIL_RE.test(rawId)) {
+        // Pastikan pencarian username dilakukan sebagai tamu, bukan sebagai sesi lama
+        await sb.auth.signOut({ scope: "local" });
+        const { data: foundEmail, error: lookupErr } = await sb.rpc("email_for_login", { login_id: rawId });
+        if (lookupErr || !foundEmail) {
+          showAuthError(t.errInvalidLogin);
+          return;
+        }
+        email = foundEmail;
+      }
+
+      localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pwVal });
+      if (error || !data.session) {
+        showAuthError(t.errInvalidLogin);
+        return;
+      }
+
+      showAuthError("");
+      await loadProfileIntoState(data.session.user);
+      sessionLoggedIn = true;
+      currentPage = "home";
+      updateAuthVisibility();
+      showToast(t.toastLoginOk(state.profile.name));
+    });
+
+    $("register-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const t = T();
+      const name = $("reg-name").value.trim();
+      const username = normUsername($("reg-username").value);
+      const email = $("reg-email").value.trim();
+      const pw = $("reg-password").value;
+      const confirmPw = $("reg-confirm").value;
+
+      if (!name || !username || !email || !pw || !confirmPw) {
+        showAuthError(t.errEmptyReg);
+        return;
+      }
+      if (!USERNAME_RE.test(username)) {
+        showAuthError(t.errInvalidUsername);
+        return;
+      }
+      if (!EMAIL_RE.test(email)) {
+        showAuthError(t.errInvalidEmail);
+        return;
+      }
+      if (pw.length < 6) {
+        showAuthError(t.errShortPw);
+        return;
+      }
+      if (pw !== confirmPw) {
+        showAuthError(t.errMismatchPw);
+        return;
+      }
+
+      localStorage.setItem(REMEMBER_KEY, "1");
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password: pw,
+        options: { data: { full_name: name, username } }
+      });
+
+      if (error) {
+        const msg = /already registered/i.test(error.message)
+          ? t.errEmailTaken
+          : `${t.errRegFailed} (${error.message})`;
+        showAuthError(msg);
+        return;
+      }
+
+      showAuthError("");
+      $("register-form").reset();
+      if (!data.session) {
+        // Konfirmasi email aktif: pengguna harus klik tautan dulu
+        setAuthTab("login");
+        showToast(t.toastCheckEmail);
+        return;
+      }
+      await loadProfileIntoState(data.session.user);
+      sessionLoggedIn = true;
+      currentPage = "home";
+      updateAuthVisibility();
+      showToast(t.toastRegOk(name));
+    });
+
+    $("btn-forgot-pw").addEventListener("click", () => {
+      const t = T();
+      openModal(t.forgotTitle, `
+        <p class="muted text-sm font-bold mb-4">${esc(t.forgotDesc)}</p>
+        <form id="forgot-form" class="space-y-4">
+          <div>
+            <label class="field-label">${esc(t.regEmail)}</label>
+            <input name="email" type="email" class="field" placeholder="nama@email.com" required>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" id="m-cancel" class="app-button light-button text-sm">${esc(t.cancel)}</button>
+            <button type="submit" class="app-button text-sm" style="background:#d9c6f5;color:#48342f;">${esc(t.forgotSend)}</button>
+          </div>
+        </form>
+      `);
+      $("m-cancel").onclick = closeModal;
+      $("forgot-form").onsubmit = async ev => {
+        ev.preventDefault();
+        const email = new FormData(ev.target).get("email");
+        closeModal();
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.href.split("#")[0]
+        });
+        showToast(error ? t.errRegFailed : t.toastResetSent(email));
+      };
+    });
+
+    $("btn-logout").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      sessionLoggedIn = false;
+      state.auth.isLoggedIn = false;
+      saveState();
+      $("login-password").value = "";
+      updateAuthVisibility();
+      showToast(T().toastLogout);
+    });
+
+    // Initialize Application: cek sesi yang sudah ada
+    window.addEventListener("load", async () => {
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data.session) {
+          await loadProfileIntoState(data.session.user);
+          sessionLoggedIn = true;
+        } else {
+          sessionLoggedIn = false;
+        }
+      } catch (err) {
+        console.error("Gagal memuat data akun:", err);
+        showAuthError(XL("errLoad") + (err?.message || err));
+        sessionLoggedIn = false;
+      }
+      updateAuthVisibility();
+    });
+  })();
+  </script>
+</body>
+</html>
