@@ -395,10 +395,13 @@
   </style>
 </head>
 <body>
+  <div id="boot-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff6ec;z-index:50;">
+    <img src="https://raw.githubusercontent.com/aneswid1234/CelenganAku/8be8409a05f02d92dff1fc90894ec71fb56ae035/assets/Logo%20Celengan%20Aku.png" alt="Celengan Aku" style="width:180px;opacity:.9;">
+  </div>
   <div id="toast-container" aria-live="polite"></div>
 
   <!-- HALAMAN LOGIN & DAFTAR (FIRST-ENTRY SCREEN) -->
-  <div id="auth-screen" class="auth-screen">
+  <div id="auth-screen" class="auth-screen" hidden>
     <div class="w-full max-w-md flex justify-end">
       <label class="sr-only" for="auth-lang">Bahasa</label>
       <select id="auth-lang" class="field !w-auto !min-h-0 !py-2 font-bold text-sm" aria-label="Bahasa">
@@ -1990,7 +1993,10 @@
       showAuthError("");
     };
 
+    let authChecked = false;
     const updateAuthVisibility = () => {
+      if (!authChecked) return;
+      $("boot-screen").hidden = true;
       const loggedIn = Boolean(sessionLoggedIn);
       $("auth-screen").hidden = loggedIn;
       $("app-main-wrap").hidden = !loggedIn;
@@ -4085,6 +4091,7 @@
         showAuthError(XL("errLoad") + (err?.message || err));
         sessionLoggedIn = false;
       }
+      authChecked = true;
       updateAuthVisibility();
     });
   })();
